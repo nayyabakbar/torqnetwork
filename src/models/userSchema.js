@@ -56,6 +56,10 @@ const userSchema = mongoose.Schema(
                 ref: "User"
             },
         ],
+        referrals: {
+            type: Number,
+            default: 0
+        },
         rank: {
             type: Number,
             default: 0
@@ -78,9 +82,15 @@ const userSchema = mongoose.Schema(
         miningSessions: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: "MiningSession"
-        }]
-
-        
+        }],
+        stakings: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Staking"
+        }],
+        qrCodePath: {
+            type: String,
+            default: '', 
+        },        
     }
 )
 

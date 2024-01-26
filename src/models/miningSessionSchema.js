@@ -20,12 +20,27 @@ const miningSessionSchema = mongoose.Schema({
         },
         percentage:{
             type: Number
+        },
+        time: {
+            type: Date,
+            default: new Date () 
         }
     }],
     isActive: {
         type: Boolean,
         default: false
+    },
+    activeTier1Count: {
+        type: Number,
+        default: 0
+    },
+    activeTier2Count: {
+        type: Number,
+        default: 0
     }    
 })
 
 module.exports = mongoose.model("MiningSession", miningSessionSchema);
+
+
+

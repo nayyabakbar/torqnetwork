@@ -1,6 +1,7 @@
 require('dotenv').config();
 var express = require('express');
 var http = require('http');
+var path = require("path");
 const passport = require('passport');
 const session = require('express-session');
 const secretKey = require('./config/secret');
@@ -26,6 +27,8 @@ app.use(express.static('public'));
 app.use(passport.initialize())
 app.use(passport.session())
 app.use(userRouter);
+app.use('/badges', express.static(path.join(__dirname, 'public/badges')));
+//app.use('/qrCodes', express.static(path.join(__dirname, 'public/qrCodes')));
 
 app.get('/', (req,res)=>{
     res.send("Welcome to Torqnetwork!");

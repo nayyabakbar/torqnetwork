@@ -1,0 +1,30 @@
+const badges = [
+    { name: "wildBoar", level: 1, imageUrl: "/badges/wildBoar.jpeg" },
+    { name: "panther", level: 2, imageUrl: "/badges/panther.jpeg" },
+    { name: "monkey", level: 3, imageUrl: "/badges/monkey.jpeg" },
+    { name: "wildeBeest", level: 4, imageUrl: "/badges/wildeBeest.jpeg" },
+    { name: "zebra", level: 5, imageUrl: "/badges/zebra.jpeg" },
+    { name: "giraffe", level: 6, imageUrl: "/badges/giraffe.jpeg" },
+    { name: "monitorLizard", level: 7, imageUrl: "/badges/monitorLizard.jpeg" },
+    { name: "honeyBadger", level: 8, imageUrl: "/badges/honeyBadger.jpeg" },
+    { name: "koala", level: 9, imageUrl: "/badges/koala.jpeg" },
+    { name: "snake", level: 10, imageUrl: "/badges/snake.jpeg" },
+    { name: "vulture", level: 11, imageUrl: "/badges/vulture.jpeg" },
+    { name: "panda", level: 12, imageUrl: "/badges/panda.jpeg" },
+    { name: "hyena", level: 13, imageUrl: "/badges/hyena.jpeg" },
+    { name: "wolf", level: 14, imageUrl: "/badges/wolf.jpeg" },
+    { name: "buffalo", level: 15, imageUrl: "/badges/buffalo.jpeg" },
+    { name: "gorilla", level: 16, imageUrl: "/badges/gorilla.jpeg" },
+    { name: "eagle", level: 17, imageUrl: "/badges/eagle.jpeg" },
+    { name: "bear", level: 18, imageUrl: "/badges/bear.jpeg" },
+    { name: "cheetah", level: 19, imageUrl: "/badges/cheetah.jpeg" },
+    { name: "crocodile", level: 20, imageUrl: "/badges/crocodile.jpeg" },
+    { name: "rhino", level: 21, imageUrl: "/badges/rhino.jpeg" },
+    { name: "lion", level: 22, imageUrl: "/badges/lion.jpeg" },
+    { name: "tiger", level: 23, imageUrl: "/badges/tiger.jpeg" },
+    { name: "dragon", level: 24, imageUrl: "/badges/dragon.jpeg" },
+    { name: "trex", level: 25, imageUrl: "/badges/trex.jpeg" },
+  ];
+  
+  module.exports = badges;
+  

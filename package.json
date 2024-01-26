@@ -32,6 +32,7 @@
     "passport-facebook": "^3.0.0",
     "passport-google-oauth2": "^0.2.0",
     "passport-twitter": "^1.0.4",
+    "qrcode": "^1.5.3",
     "toad-scheduler": "^3.0.0"
   }
 }
