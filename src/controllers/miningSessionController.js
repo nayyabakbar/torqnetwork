@@ -4,7 +4,6 @@ const Staking = require("../models/stakingSchema");
 const schedule = require("node-schedule");
 const constants = require("../constants");
 
-
 async function updateRank(userId){
   try {
     const users = await User.aggregate( [
@@ -183,46 +182,46 @@ async function getActiveTiers(userId, referralType) {
   }
 }
 
-// const inactivityCheckJob = schedule.scheduleJob(' 0 * * * *', async function() { //All users that have been inactive since 25 hours
-//   try {
+const inactivityCheckJob = schedule.scheduleJob(' 0 * * * *', async function() { //All users that have been inactive since 25 hours
+  try {
 
-//     
-//     const inactiveUsers = await User.find({
-//       lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
-//     });
-//     for (const user of inactiveUsers) {
-//       console.log("user is", user)
-//         const daysOffAvailable = user.daysOff;
-//         if (daysOffAvailable !== 0){
-//             const newSession = new MiningSession({
-//               userId: user._id,
-//               createdAt: new Date(),
-//               isActive: true,
-//             });
-//             await newSession.save();
-//             user.streak = 0;
-//             user.daysOff -= 1;
-//             user.lastCheckIn = new Date();
-//             user.miningSessions.push(newSession);
-//             await user.save();
-//             processHourlyEarnings(user._id, newSession._id);
-//         }
-//         else {
-//           const availableBalance = user.availableBalance;
-//           const burningRate = (4/2400)*availableBalance;
-//           const newBalance = (availableBalance - burningRate).toFixed(2);
-//           user.availableBalance = Number(newBalance);
-//           await user.save();
-//           const updateUserRank = updateRank(userId);
+    
+    const inactiveUsers = await User.find({
+      lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
+    });
+    for (const user of inactiveUsers) {
+      console.log("user is", user)
+        const daysOffAvailable = user.daysOff;
+        if (daysOffAvailable !== 0){
+            const newSession = new MiningSession({
+              userId: user._id,
+              createdAt: new Date(),
+              isActive: true,
+            });
+            await newSession.save();
+            user.streak = 0;
+            user.daysOff -= 1;
+            user.lastCheckIn = new Date();
+            user.miningSessions.push(newSession);
+            await user.save();
+            processHourlyEarnings(user._id, newSession._id);
+        }
+        else {
+          const availableBalance = user.availableBalance;
+          const burningRate = (4/2400)*availableBalance;
+          const newBalance = (availableBalance - burningRate).toFixed(2);
+          user.availableBalance = Number(newBalance);
+          await user.save();
+          const updateUserRank = updateRank(userId);
 
-//         }
-//     }
-//   } catch (error) {
-//     console.error("Error during inactivity check:", error);
-//   }
-// });
+        }
+    }
+  } catch (error) {
+    console.error("Error during inactivity check:", error);
+  }
+});
 
-// inactivityCheckJob.invoke();
+inactivityCheckJob.invoke();
 
 
 schedule.scheduleJob('0 0 * * *', async function () { //All users that have been inactive since 30 days

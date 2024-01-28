@@ -90,7 +90,11 @@ const userSchema = mongoose.Schema(
         qrCodePath: {
             type: String,
             default: '', 
-        },        
+        },  
+        photo: {
+            type: String,
+            default: ""
+        }      
     }
 )
 

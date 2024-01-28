@@ -50,9 +50,4 @@ router.post("/bonusWheelReward",verifyToken, bonusWheelReward);
 router.get("/activeTiers",verifyToken, activeTiers);
 router.get("/earningCalculator", verifyToken, earningCalculator)
 
-
-
-
-
-
 module.exports = router;
