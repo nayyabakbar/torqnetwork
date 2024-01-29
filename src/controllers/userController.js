@@ -13,6 +13,7 @@ const badges = require("../badges");
 const QrCode = require("qrcode");
 const fs = require("fs").promises;
 const path = require("path");
+const cloudinary = require("../../config/cloudinary");
 
 async function signUp(req, res) {
   try {
@@ -28,19 +29,19 @@ async function signUp(req, res) {
       const saveUser = await user.save();
       const userId = saveUser._id;
       //Create QR Code For Invitation
-      const qrCodeDirectory = 'public/qrCodes'; 
+      const qrCodeDirectory = "public/qrCodes";
       const imagePath = path.join(qrCodeDirectory, `${userId}_qr.png`);
-      await fs.mkdir(path.join( qrCodeDirectory), { recursive: true });
+      await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
       const generateCode = await QrCode.toFile(imagePath, user.invitationCode);
-      await User.findByIdAndUpdate(userId, {$set: {qrCodePath: imagePath}})
-      
+      await User.findByIdAndUpdate(userId, { $set: { qrCodePath: imagePath } });
 
       //Check for invitation code
       const invitationCode = req.body.invitationCode;
 
       if (!invitationCode == "") {
-        const inviter = await User.findOne({ invitationCode: invitationCode }); 
-        const calculateLevel = (referrals)=>  Math.round(Math.pow(referrals+1, 1 / 3));
+        const inviter = await User.findOne({ invitationCode: invitationCode });
+        const calculateLevel = (referrals) =>
+          Math.round(Math.pow(referrals + 1, 1 / 3));
         const level = calculateLevel(inviter.referrals);
         if (!inviter) {
           return res.status(404).json({
@@ -48,16 +49,16 @@ async function signUp(req, res) {
           });
         } else {
           try {
-            saveUser.inviter = inviter._id; 
-            inviter.tier1Referrals.push(saveUser._id); 
+            saveUser.inviter = inviter._id;
+            inviter.tier1Referrals.push(saveUser._id);
             inviter.referrals += 1;
             inviter.level = level;
             if (inviter.inviter) {
-              const primaryInviter = await User.findById(inviter.inviter,);
-              let primaryLevel =  calculateLevel(primaryInviter.referrals+1);
-              primaryInviter.referrals +=1;
+              const primaryInviter = await User.findById(inviter.inviter);
+              let primaryLevel = calculateLevel(primaryInviter.referrals + 1);
+              primaryInviter.referrals += 1;
               primaryInviter.tier2Referrals.push(saveUser.id);
-              primaryInviter.level = primaryLevel
+              primaryInviter.level = primaryLevel;
               await primaryInviter.save();
             }
             await saveUser.save();
@@ -85,7 +86,7 @@ async function signUp(req, res) {
 
 async function login(req, res) {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findOne({ email: req.body.email }).populate('miningSessions');
     if (!user) {
       return res.status(404).json({
         message: "User doesn't exists!",
@@ -107,7 +108,7 @@ async function login(req, res) {
     const payload = {
       user: user._id,
     };
-    
+
     const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
     res.status(200).json({
       user: user,
@@ -124,7 +125,10 @@ async function getHomeInfo(req, res) {
   //console.log("here", "token: ", req.info.token, "userrrr:", req.user);
   try {
     const user = await User.findById(req.user.user); //req.user.user contains _id (from payload)
-    const session = await MiningSession.findOne({userId: user._id, isActive: true});  
+    const session = await MiningSession.findOne({
+      userId: user._id,
+      isActive: true,
+    });
     var currentEarningRate = 0;
     var coins = 0;
     var tier1Bonus = 0;
@@ -132,16 +136,20 @@ async function getHomeInfo(req, res) {
     var bonusWheelBonus = 0;
     var hourlyEarnings = [];
     if (user) {
-      if(session){
-        tier1Bonus = session.activeTier1Count * (constants.tier1ReferralBonusPercentage*100); //*100 because we have to calculate percentage 
-        tier2Bonus = session.activeTier2Count * (constants.tier2ReferralBonusPercentage*100);
+      if (session) {
+        tier1Bonus =
+          session.activeTier1Count *
+          (constants.tier1ReferralBonusPercentage * 100); //*100 because we have to calculate percentage
+        tier2Bonus =
+          session.activeTier2Count *
+          (constants.tier2ReferralBonusPercentage * 100);
         bonusWheelBonus = session.bonusWheel;
-        coins = ((tier1Bonus+tier2Bonus)/100) * constants.baseMiningRate;
+        coins = ((tier1Bonus + tier2Bonus) / 100) * constants.baseMiningRate;
         hourlyEarnings = session.hourlyEarnings;
         const arrayLength = hourlyEarnings.length;
-        if(arrayLength !== 0){
-          currentEarningRate = hourlyEarnings[arrayLength-1].earning;
-        }   
+        if (arrayLength !== 0) {
+          currentEarningRate = hourlyEarnings[arrayLength - 1].earning;
+        }
       }
       return res.status(200).json({
         streak: user.streak,
@@ -149,16 +157,15 @@ async function getHomeInfo(req, res) {
         availableBalance: user.availableBalance,
         stakingBalance: user.stakingBalance,
         currentEarningRate: currentEarningRate,
-        bonusOfReferral: tier1Bonus+tier2Bonus,
+        bonusOfReferral: tier1Bonus + tier2Bonus,
         coins: coins,
         bonusWheelBonus: bonusWheelBonus,
         rank: user.rank,
         tier1Referrals: user.tier1Referrals.length,
         tier2Referrals: user.tier2Referrals.length,
-        hourlyEarnings: hourlyEarnings
+        hourlyEarnings: hourlyEarnings,
       });
     }
-   
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -244,7 +251,7 @@ async function resetPassword(req, res) {
     });
   }
 
-  const isValid = await bcrypt.compare(token,passwordResetToken.token);
+  const isValid = await bcrypt.compare(token, passwordResetToken.token);
   if (!isValid) {
     return res.status(404).json({
       message: "Invalid or expired token",
@@ -276,109 +283,143 @@ async function resetPassword(req, res) {
   });
 }
 
-
-async function checkEligibilyForBonusWheel(req,res){
+async function uploadPhoto(req, res) {
   try {
-
-    const session = await MiningSession.findOne({userId: req.user.user, isActive: true});
-    if(session){
-      if(session.bonusWheel !== 0){
-        return res.status(404).json({
-          message: "Bonus wheel not available"
+    cloudinary.uploader.upload(req.file.path, function (err, result){
+      if(err) {
+        console.log(err);
+        return res.status(500).json({
+          success: false,
+          message: "Error"
         })
       }
-      return res.status(200).json({
-        message: "Spin the wheel to earn extra bonus!"
+      res.status(200).json({
+        success: true,
+        message:"Uploaded!",
+        data: result
       })
-    }
-    return res.status(404).json({
-      message: "Start a new session to earn bonus wheel!"
     })
-
-   
   } catch (error) {
-    console.log("error", error)
+    res.status(500).json({
+      message: "An error occured",
+    });
   }
 }
 
+async function checkEligibilyForBonusWheel(req, res) {
+  try {
+    const session = await MiningSession.findOne({
+      userId: req.user.user,
+      isActive: true,
+    });
+    if (session) {
+      if (session.bonusWheel !== 0) {
+        return res.status(404).json({
+          message: "Bonus wheel not available",
+        });
+      }
+      return res.status(200).json({
+        message: "Spin the wheel to earn extra bonus!",
+      });
+    }
+    return res.status(404).json({
+      message: "Start a new session to earn bonus wheel!",
+    });
+  } catch (error) {
+    console.log("error", error);
+  }
+}
 
-async function bonusWheelReward(req,res){
+async function bonusWheelReward(req, res) {
   try {
     const rewardAmount = req.body.amount;
-    const session = await MiningSession.findOne({userId: req.user.user, isActive: true});
-    if (session && session.bonusWheel === 0){
+    const session = await MiningSession.findOne({
+      userId: req.user.user,
+      isActive: true,
+    });
+    if (session && session.bonusWheel === 0) {
       session.bonusWheel = rewardAmount;
       await session.save();
 
       return res.status(200).json({
-        message: "Congratulations!"
-      })
+        message: "Congratulations!",
+      });
     }
 
     return res.status(404).json({
-      message: "Bonus wheel not available!"
-    })
-
-    
+      message: "Bonus wheel not available!",
+    });
   } catch (error) {
-    console.log("error", error)
+    console.log("error", error);
   }
 }
 
-async function getProfile(req,res){
+async function getProfile(req, res) {
   try {
     const user = await User.findById(req.user.user);
-    if(user){
+    if (user) {
       const level = user.level;
-      const allBadges =  (badges.filter((badge) => badge.level <= level)).reverse();
+      const allBadges = badges
+        .filter((badge) => badge.level <= level)
+        .reverse();
       return res.status(200).json({
         name: user.name,
         rank: user.rank,
         level: user.level,
         referrals: user.referrals,
-        badges: allBadges
-      })
+        badges: allBadges,
+      });
     }
     return res.status(404).json({
       message: "User not found!",
     });
-
   } catch (error) {
-    return res.status(500).json({
+     res.status(500).json({
       message: "An error occured",
     });
   }
 }
 
-async function activeTiers(req,res){
+async function activeTiers(req, res) {
   try {
     const user = await User.findById(req.user.user);
     const tier1Referrals = user.tier1Referrals;
     const tier2Referrals = user.tier2Referrals;
 
-    let tier1Count = 0;
-    let tier2Count = 0; 
+    let activeTier1= [];
+    let activeTier2 = [];
 
     const tier1Promises = tier1Referrals.map(async (referralId) => {
-      const session = await MiningSession.findOne({ userId: referralId, isActive: true });
+      const session = await MiningSession.findOne({
+        userId: referralId,
+        isActive: true,
+      });
       if (session) {
-          tier1Count++;
-      }  
+        const user = await User.findById(session.userId);
+        activeTier1.push(user);
+      }
     });
 
     const tier2Promises = tier2Referrals.map(async (referralId) => {
-      const session = await MiningSession.findOne({ userId: referralId, isActive: true });
+      const session = await MiningSession.findOne({
+        userId: referralId,
+        isActive: true,
+      });
       if (session) {
-          tier2Count++;
-      }  
+        const user = await User.findById(session.userId);
+        activeTier2.push(user);
+      }
     });
-    
+
     await Promise.all([...tier1Promises, ...tier2Promises]);
     return res.status(200).json({
-      tier1Count : tier1Count,
-      tier2Count : tier2Count
-    })
-
+      totalTier1: tier1Referrals.length,
+      totalTier2: tier2Referrals.length,
+      activeTier1Count: activeTier1.length,
+      activeTier2Count: activeTier2.length,
+      activeTier1: activeTier1,
+      activeTier2: activeTier2
+    });
   } catch (error) {
     return res.status(500).json({
       message: "An error occured",
@@ -386,13 +427,12 @@ async function activeTiers(req,res){
   }
 }
 
-async function earningCalculator(req,res){
+async function earningCalculator(req, res) {
   try {
     const constantTerms = constants;
     return res.status(200).json({
-      constantTerms
+      constantTerms,
     });
-
   } catch (error) {
     return res.status(500).json({
       message: "An error occured",
@@ -400,34 +440,59 @@ async function earningCalculator(req,res){
   }
 }
 
-async function getStats(req,res){
+async function getStats(req, res) {
   try {
-    const onlineUsers = await MiningSession.countDocuments({isActive: true});
+    const onlineUsers = await MiningSession.countDocuments({ isActive: true });
     const totalUsers = await User.countDocuments({});
-    const topUsers = await User.aggregate( [
+    const topUsers = await User.aggregate([
       {
-         $setWindowFields: {
-            sortBy: { availableBalance: -1 },
-            output: {
-               rank: {
-                  $denseRank: {}
-               }
-            }
-         }
-      }
-   ])
-   return res.status(200).json({
-    onlineUsers: onlineUsers,
-    totalUsers: totalUsers,
-    topUsers : topUsers
-   })
-
+        $setWindowFields: {
+          sortBy: { availableBalance: -1 },
+          output: {
+            rank: {
+              $denseRank: {},
+            },
+          },
+        },
+      },
+    ]);
+    return res.status(200).json({
+      onlineUsers: onlineUsers,
+      totalUsers: totalUsers,
+      topUsers: topUsers,
+    });
   } catch (error) {
-    return res.status(500).json({
+     res.status(500).json({
       message: "An error occured",
     });
   }
 }
+
+async function deleteAccount(req, res) {
+  try {
+    const userId = req.user.user;
+    const user = await User.findByIdAndDelete(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found!",
+      });
+    }
+    await User.updateMany({tier1Referrals: user._id}, {$pull: {tier1Referrals: user._id}});
+    await User.updateMany({tier2Referrals: user._id}, {$pull: {tier2Referrals: user._id}});
+    await MiningSession.deleteMany({userId: user._id})
+
+    res.status(200).json({
+      message: "User deleted successfully!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "An error occurred",
+    });
+  }
+}
+
 
 module.exports = {
   login,
@@ -440,5 +505,7 @@ module.exports = {
   getProfile,
   activeTiers,
   earningCalculator,
-  getStats
+  getStats,
+  uploadPhoto,
+  deleteAccount
 };

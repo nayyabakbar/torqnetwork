@@ -3,8 +3,9 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const secretKey = require("../../config/secret");
+const multer = require("multer");
 
-const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats } = require("../controllers/userController");
+const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount } = require("../controllers/userController");
 const {startMining, startStaking} = require ("../controllers/miningSessionController");
 
 
@@ -27,11 +28,20 @@ function verifyToken(req, res, next) {
   });
 }
 
+
+const storage = multer.diskStorage({
+  filename: function(req,file,cb){
+    cb(null, file.originalname)
+  }
+})
+
+const upload = multer({storage: storage})
+
 router.post("/signUp", signUp)
 router.post("/login", login)
 router.post("/requestResetPassword", requestResetPassword);
 router.post("/resetPassword", resetPassword);
-
+router.post("/uploadPhoto", upload.single('photo'), uploadPhoto)
 
 router.get("/google", passport.authenticate('google', {scope: ['profile', 'email']}));
 router.get("/google/callback", passport.authenticate('google', {failureRedirect: '/login'}), (req,res)=> res.redirect('/home'))
@@ -43,11 +53,16 @@ router.post("/startMining",verifyToken, startMining);
 router.post("/startStaking",verifyToken, startStaking);
 
 router.get("/home",verifyToken, getHomeInfo);
-router.get("/getProfile",verifyToken, getProfile)
+router.get("/getProfile",verifyToken, getProfile);
+router.delete("/deleteAccount", verifyToken, deleteAccount);
+
+
 router.get("/getStats",verifyToken, getStats);
 router.get("/checkEligibilyForBonusWheel",verifyToken, checkEligibilyForBonusWheel);
 router.post("/bonusWheelReward",verifyToken, bonusWheelReward);
 router.get("/activeTiers",verifyToken, activeTiers);
-router.get("/earningCalculator", verifyToken, earningCalculator)
+router.get("/earningCalculator", verifyToken, earningCalculator);
+
+
 
 module.exports = router;
