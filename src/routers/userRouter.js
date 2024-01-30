@@ -4,8 +4,7 @@ const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const secretKey = require("../../config/secret");
 const multer = require("multer");
-const {GridFsStorage} = require('multer-gridfs-storage');
-const db  = require("../../config/db");   
+
 const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount } = require("../controllers/userController");
 const {startMining, startStaking} = require ("../controllers/miningSessionController");
 
@@ -29,16 +28,14 @@ function verifyToken(req, res, next) {
   });
 }
 
-const storage = new GridFsStorage({ db:db });
-const upload = multer({ storage });
 
-// const storage = multer.diskStorage({
-//   filename: function(req,file,cb){
-//     cb(null, file.originalname)
-//   }
-// })
+const storage = multer.diskStorage({
+  filename: function(req,file,cb){
+    cb(null, file.originalname)
+  }
+})
 
-// const upload = multer({storage: storage})
+const upload = multer({storage: storage})
 
 router.post("/signUp", signUp)
 router.post("/login", login)
