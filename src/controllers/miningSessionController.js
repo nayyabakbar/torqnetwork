@@ -306,7 +306,7 @@ function createStakingJob(userId, stakingId, amount, years) {
         const user = await User.findByIdAndUpdate(userId, { $inc: { availableBalance: getStakedAmount, stakingBalance: -amount } });
         if (!user) {
           console.error("User not found!");
-        }
+        } 
       }
     } catch (error) {
       console.error("Error in staking job execution:", error);

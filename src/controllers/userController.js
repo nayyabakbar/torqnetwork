@@ -138,10 +138,10 @@ async function getHomeInfo(req, res) {
     if (user) {
       if (session) {
         tier1Bonus =
-          session.activeTier1Count *
+          session.inActiveTier1Count *
           (constants.tier1ReferralBonusPercentage * 100); //*100 because we have to calculate percentage
         tier2Bonus =
-          session.activeTier2Count *
+          session.inActiveTier2Count *
           (constants.tier2ReferralBonusPercentage * 100);
         bonusWheelBonus = session.bonusWheel;
         coins = ((tier1Bonus + tier2Bonus) / 100) * constants.baseMiningRate;
@@ -388,28 +388,28 @@ async function activeTiers(req, res) {
     const tier1Referrals = user.tier1Referrals;
     const tier2Referrals = user.tier2Referrals;
 
-    let activeTier1= [];
-    let activeTier2 = [];
+    let inActiveTier1= [];
+    let inActiveTier2 = [];
 
     const tier1Promises = tier1Referrals.map(async (referralId) => {
       const session = await MiningSession.findOne({
         userId: referralId,
-        isActive: true,
+        isActive: false,
       });
       if (session) {
         const user = await User.findById(session.userId);
-        activeTier1.push(user);
+        inActiveTier1.push(user);
       }
     });
 
     const tier2Promises = tier2Referrals.map(async (referralId) => {
       const session = await MiningSession.findOne({
         userId: referralId,
-        isActive: true,
+        isActive: false,
       });
       if (session) {
         const user = await User.findById(session.userId);
-        activeTier2.push(user);
+        inActiveTier2.push(user);
       }
     });
 
@@ -417,10 +417,8 @@ async function activeTiers(req, res) {
     return res.status(200).json({
       totalTier1: tier1Referrals.length,
       totalTier2: tier2Referrals.length,
-      activeTier1Count: activeTier1.length,
-      activeTier2Count: activeTier2.length,
-      activeTier1: activeTier1,
-      activeTier2: activeTier2
+      inActiveTier1: inActiveTier1,
+      inActiveTier2: inActiveTier2
     });
   } catch (error) {
     return res.status(500).json({
