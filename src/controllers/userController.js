@@ -285,20 +285,21 @@ async function resetPassword(req, res) {
 
 async function uploadPhoto(req, res) {
   try {
-    cloudinary.uploader.upload(req.file.path, function (err, result){
-      if(err) {
-        console.log(err);
-        return res.status(500).json({
-          success: false,
-          message: "Error"
-        })
-      }
-      res.status(200).json({
-        success: true,
-        message:"Uploaded!",
-        data: result
-      })
-    })
+    console.log(req.file)
+    // cloudinary.uploader.upload(req.file.path, function (err, result){
+    //   if(err) {
+    //     console.log(err);
+    //     return res.status(500).json({
+    //       success: false,
+    //       message: "Error"
+    //     })
+    //   }
+    //   res.status(200).json({
+    //     success: true,
+    //     message:"Uploaded!",
+    //     data: result
+    //   })
+    // })
   } catch (error) {
     res.status(500).json({
       message: "An error occured",
@@ -368,6 +369,7 @@ async function getProfile(req, res) {
         level: user.level,
         referrals: user.referrals,
         badges: allBadges,
+        balance: user.availableBalance
       });
     }
     return res.status(404).json({

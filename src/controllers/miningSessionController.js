@@ -84,7 +84,7 @@ async function startMining(req, res) {
 
 function processHourlyEarnings(userId, sessionId) {
   const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+  const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
   const endTime2 = new Date(endTime.getTime() + 1 * 60 * 1000);
 
   const job = schedule.scheduleJob(endTime2, async function () {
@@ -105,7 +105,7 @@ function processHourlyEarnings(userId, sessionId) {
   });
 
   schedule.scheduleJob(
-    { start: startTime, end: endTime, rule: "* * * * *" },
+    { start: startTime, end: endTime, rule: "*/2 * * * *" },
     async function () {
       getHourlyEarnings(userId, sessionId);
     }
