@@ -20,7 +20,7 @@ const stakingSchema = mongoose.Schema({
     }, 
     isActive: {
         type: Boolean,
-        default: false
+        default: true
     },
     amount: {
         type: Number,

@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const { hashSync, compareSync } = require("bcrypt");
 const User = require("../models/userSchema");
 const MiningSession = require("../models/miningSessionSchema");
+const Staking = require("../models/stakingSchema");
 const constants = require("../constants");
 const crypto = require("crypto");
 const Token = require("../models/tokenSchema");
@@ -122,6 +123,7 @@ async function login(req, res) {
 }
 
 async function getHomeInfo(req, res) {
+  console.log("here")
   //console.log("here", "token: ", req.info.token, "userrrr:", req.user);
   try {
     const user = await User.findById(req.user.user); //req.user.user contains _id (from payload)
@@ -192,8 +194,9 @@ async function requestResetPassword(req, res) {
       await existingToken.deleteOne();
     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const hash = await bcrypt.hash(resetToken, Number(10));
+    const verificationCode = Math.floor(100000 + Math.random() * 900000);
+    const verificationCodeString = verificationCode.toString();
+    const hash = await bcrypt.hash(verificationCodeString, Number(10));
     const newToken = new Token({
       token: hash,
       userId: user._id,
@@ -201,14 +204,14 @@ async function requestResetPassword(req, res) {
     });
 
     const savedToken = await newToken.save();
-    console.log("Reset token is", resetToken);
-    const link = `http://localhost:3000/passwordReset?token=${resetToken}&id=${user._id}`;
+  
+    //const link = `http://localhost:3000/passwordReset?token=${resetToken}&id=${user._id}`;
     const emailResult = await sendEmail(
       user.email,
       "Password Reset Request",
       {
         name: user.name,
-        link: link,
+        code: verificationCode,
       },
       "../utils/templates/resetPasswordRequest.handlebars"
     );
@@ -285,7 +288,24 @@ async function resetPassword(req, res) {
 
 async function uploadPhoto(req, res) {
   try {
-    console.log(req.file)
+    const user = await User.findByIdAndUpdate(
+      req.user.user,
+      {
+        photo: req.file.filename,
+      },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found!",
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Photo Added!",
+      photo: user.photo,
+    });
     // cloudinary.uploader.upload(req.file.path, function (err, result){
     //   if(err) {
     //     console.log(err);
@@ -302,7 +322,7 @@ async function uploadPhoto(req, res) {
     // })
   } catch (error) {
     res.status(500).json({
-      message: "An error occured",
+      message: "An error occured",error
     });
   }
 }
@@ -494,6 +514,127 @@ async function deleteAccount(req, res) {
 }
 
 
+async function getInfo(req,res){
+  try {
+    const user = await User.findById(req.user.user);
+    const stakedBalance = user.stakingBalance;
+    const lastCheckIn = user.lastCheckIn;
+    const currentTime = new Date();
+    const nextCheckIn = new Date(lastCheckIn.getTime()+ 24 * 60 * 60 * 1000);
+    const timeRemaining = nextCheckIn - currentTime;
+    const hoursRemaining = Math.floor(timeRemaining/(60 * 60 * 1000));
+    const minutesRemaining = Math.floor((timeRemaining % (60 * 60 * 1000))/ (60 * 1000));
+    
+    let stakingPeriod;
+    const staking = await Staking.findOne({userId: user._id, isActive: true}).sort({years: 1}).limit(1);
+    if(staking){
+      stakingPeriod = staking.years;
+    }
+    else{
+      stakingPeriod = 0
+    }
+    res.status(200).json({
+      timeRemaining: `${hoursRemaining}h ${minutesRemaining}m`,
+      stakedBalance: stakedBalance,
+      stakedPeriod: stakingPeriod 
+    })
+
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occured!"
+    })
+  }
+}
+
+async function balanceHistory(req, res) {
+  try {
+    const id = req.user.user;
+    const today = new Date();
+
+    // Sessions created one day ago
+    const dayOld = await getFormattedHourlyEarnings(
+      await getMiningSessions(
+        new Date(today).setDate(today.getDate() - 1),
+        today,
+        id
+      )
+    );
+
+    // Sessions created one week ago
+    const weekOld = await getFormattedHourlyEarnings(
+      await getMiningSessions(
+        new Date(today).setDate(today.getDate() - 7),
+        today,
+        id
+      )
+    );
+
+    // Sessions created one month ago
+    const monthOld = await getFormattedHourlyEarnings(
+      await getMiningSessions(
+        new Date(today).setMonth(today.getMonth() - 1),
+        today,
+        id
+      )
+    );
+
+    // Sessions for user-entered date
+    const specificDate = new Date(req.body.date);
+    let specificDateSessions = [];
+    if (specificDate) {
+      specificDateSessions = await getFormattedHourlyEarnings(
+        await getMiningSessions(
+          specificDate,
+          new Date(specificDate).setHours(23, 59, 59, 999),
+          id
+        )
+      );
+    }
+    return res.status(200).json({
+      dayOld: dayOld,
+      weekOld: weekOld,
+      monthOld: monthOld,
+      specificDate: specificDateSessions,
+    });
+  } catch (error) {
+    console.error(`Error in balanceHistory: ${error.message}`);
+    res.status(500).json({
+      message: "An error occurred!",
+    });
+  }
+}
+
+async function getFormattedHourlyEarnings(sessions) {
+  return sessions.map((session) =>
+    session.hourlyEarnings.map((hourlyEarning) => ({
+      ...hourlyEarning.toObject(),
+      time: new Date(hourlyEarning.time).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    }))
+  ).flat();
+}
+
+async function getMiningSessions(startDate, endDate, userId) {
+  try {
+    const sessions = await MiningSession.find({
+      userId: userId,
+      createdAt: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    });
+
+    return sessions;
+  } catch (error) {
+    console.error(`Error finding mining sessions: ${error.message}`);
+    return [];
+  }
+}
+
+
+
 module.exports = {
   login,
   signUp,
@@ -507,5 +648,7 @@ module.exports = {
   earningCalculator,
   getStats,
   uploadPhoto,
-  deleteAccount
+  deleteAccount,
+  getInfo,
+  balanceHistory
 };

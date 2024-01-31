@@ -12,19 +12,6 @@ const app = express();
 var server = http.createServer(app);
 db.mongoConnection();
 
-
-const { initializeApp, applicationDefault } = require('firebase-admin/app');
-const {getMessaging} = require('firebase-admin/messaging');
-
-
-//var serviceAccount = require("path/to/serviceAccountKey.json");
-
-initializeApp({
-  credential: applicationDefault(),
-  projectId: "torqnetwork-309e8"
-});
-
-
 const userRouter = require("./src/routers/userRouter");
 const marketsRouter = require("./src/routers/marketsRouter.js");
 
@@ -39,6 +26,7 @@ app.use(userRouter);
 app.use(marketsRouter);
 
 app.use('/badges', express.static(path.join(__dirname, 'public/badges')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/photoUploads')));
 //app.use('/qrCodes', express.static(path.join(__dirname, 'public/qrCodes')));
 
 app.get('/', (req,res)=>{
@@ -48,27 +36,6 @@ app.get('/', (req,res)=>{
 app.get('/home', (req,res)=>{
     res.send("Home!");
 });
-
-app.post('/send', (req,res)=>{
-  const receivedToken = req.body.fcmToken;
-  const message= {
-    notification: {
-      title: "Notification",
-      body: "This is a test notification"
-    },
-    token : receivedToken
-  }
-
-  getMessaging().send(message)
-  .then((response) => {
-    // Response is a message ID string.
-    console.log('Successfully sent message:', response);
-  })
-  .catch((error) => {
-    console.log('Error sending message:', error);
-  });
-});
-
 
 server.listen(3000,(req,res)=>{
     console.log("Server Running")

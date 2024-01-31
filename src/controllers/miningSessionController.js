@@ -84,7 +84,7 @@ async function startMining(req, res) {
 
 function processHourlyEarnings(userId, sessionId) {
   const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
+  const endTime = new Date(startTime.getTime() + 10 * 60 * 60 * 1000);
   const endTime2 = new Date(endTime.getTime() + 1 * 60 * 1000);
 
   const job = schedule.scheduleJob(endTime2, async function () {
@@ -142,6 +142,7 @@ async function getHourlyEarnings(userId, sessionId) {
 
   const hourlyEarnings = {
     earning: hourlyMiningRate,
+    time: new Date(),
     percentage: Number(((constants.baseMiningRate / hourlyMiningRate) * 100).toFixed(2)),
   };
 
