@@ -84,7 +84,7 @@ async function startMining(req, res) {
 
 function processHourlyEarnings(userId, sessionId) {
   const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + 10 * 60 * 60 * 1000);
+  const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
   const endTime2 = new Date(endTime.getTime() + 1 * 60 * 1000);
 
   const job = schedule.scheduleJob(endTime2, async function () {
@@ -105,7 +105,7 @@ function processHourlyEarnings(userId, sessionId) {
   });
 
   schedule.scheduleJob(
-    { start: startTime, end: endTime, rule: "*/2 * * * *" },
+    { start: startTime, end: endTime, rule: "0 * * * *" },
     async function () {
       getHourlyEarnings(userId, sessionId);
     }
@@ -184,61 +184,61 @@ async function getActiveTiers(userId, referralType) {
   }
 }
 
-// const inactivityCheckJob = schedule.scheduleJob(' 0 * * * *', async function() { //All users that have been inactive since 25 hours
-//   try {
+const inactivityCheckJob = schedule.scheduleJob(' 0 * * * *', async function() { //All users that have been inactive since 25 hours
+  try {
 
     
-//     const inactiveUsers = await User.find({
-//       lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
-//     });
-//     for (const user of inactiveUsers) {
-//         const daysOffAvailable = user.daysOff;
-//         if (daysOffAvailable !== 0){
-//             const newSession = new MiningSession({
-//               userId: user._id,
-//               createdAt: new Date(),
-//               isActive: true,
-//             });
-//             await newSession.save();
-//             user.streak = 0;
-//             user.daysOff -= 1;
-//             user.lastCheckIn = new Date();
-//             user.miningSessions.push(newSession);
-//             await user.save();
-//             processHourlyEarnings(user._id, newSession._id);
-//         }
-//         else {
-//           const availableBalance = user.availableBalance;
-//           const burningRate = (4/2400)*availableBalance;
-//           const newBalance = (availableBalance - burningRate).toFixed(2);
-//           user.availableBalance = Number(newBalance);
-//           await user.save();
-//           const updateUserRank = updateRank(user._Id);
+    const inactiveUsers = await User.find({
+      lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
+    });
+    for (const user of inactiveUsers) {
+        const daysOffAvailable = user.daysOff;
+        if (daysOffAvailable !== 0){
+            const newSession = new MiningSession({
+              userId: user._id,
+              createdAt: new Date(),
+              isActive: true,
+            });
+            await newSession.save();
+            user.streak = 0;
+            user.daysOff -= 1;
+            user.lastCheckIn = new Date();
+            user.miningSessions.push(newSession);
+            await user.save();
+            processHourlyEarnings(user._id, newSession._id);
+        }
+        else {
+          const availableBalance = user.availableBalance;
+          const burningRate = (4/2400)*availableBalance;
+          const newBalance = (availableBalance - burningRate).toFixed(2);
+          user.availableBalance = Number(newBalance);
+          await user.save();
+          const updateUserRank = updateRank(user._Id);
 
-//         }
-//     }
-//   } catch (error) {
-//     console.error("Error during inactivity check:", error);
-//   }
-// });
+        }
+    }
+  } catch (error) {
+    console.error("Error during inactivity check:", error);
+  }
+});
 
-// inactivityCheckJob.invoke();
+inactivityCheckJob.invoke();
 
 
-// schedule.scheduleJob('0 0 * * *', async function () { //All users that have been inactive since 30 days
-//   try {
-//     const users = await User.find({ lastCheckIn: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } });
-//     const promises = users.map(async(user)=>{
-//     user.availableBalance = 0;
-//     user.stakingBalance = 0;
-//     await user.save();
-//   })
-//   await Promise.all(promises)
+schedule.scheduleJob('0 0 * * *', async function () { //All users that have been inactive since 30 days
+  try {
+    const users = await User.find({ lastCheckIn: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } });
+    const promises = users.map(async(user)=>{
+    user.availableBalance = 0;
+    user.stakingBalance = 0;
+    await user.save();
+  })
+  await Promise.all(promises)
   
-//   } catch (error) {
-//     console.error('Error:', error);
-//   }
-// });
+  } catch (error) {
+    console.error('Error:', error);
+  }
+});
 
 
 
