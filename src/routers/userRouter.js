@@ -12,6 +12,8 @@ const {startMining, startStaking} = require ("../controllers/miningSessionContro
 const {send} = require("../../utils/notifications");
 
 function verifyToken(req, res, next) {
+  console.log("in verify token")
+  console.log("Headers in verifying token:", req.headers);
   const token = req.headers.authorization;
   if (!token) {
     return res.status(401).json({
@@ -58,7 +60,13 @@ router.post("/resetPassword", resetPassword);
 router.post("/uploadPhoto",verifyToken, uploadFile, uploadPhoto)
 
 router.get("/google", passport.authenticate('google', {scope: ['profile', 'email']}));
-router.get("/google/callback", passport.authenticate('google', {failureRedirect: '/login'}), (req,res)=> res.redirect('/home'))
+router.get(
+  "/google/callback",
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  generateToken, 
+  (req, res) => {
+  }
+);
 
 // router.get("/facebook", passport.authenticate('facebook', {scope: ['email']}));
 // router.get("/facebook/callback", passport.authenticate('google', {failureRedirect: '/login'}), (req,res)=> res.redirect('/home'))
@@ -81,6 +89,16 @@ router.get("/balanceHistory", verifyToken, balanceHistory)
 
 router.post("/sendNotification", verifyToken, send);
 
+async function generateToken(req,res,next){
+  const user = req.user;
 
+  const payload = {
+    user: user._id,
+  };
+
+  const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
+  res.json({ token });
+  next();
+}
 
 module.exports = router;

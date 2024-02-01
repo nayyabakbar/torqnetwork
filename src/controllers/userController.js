@@ -87,7 +87,9 @@ async function signUp(req, res) {
 
 async function login(req, res) {
   try {
-    const user = await User.findOne({ email: req.body.email }).populate('miningSessions');
+    const user = await User.findOne({ email: req.body.email }).populate(
+      "miningSessions"
+    );
     if (!user) {
       return res.status(404).json({
         message: "User doesn't exists!",
@@ -123,7 +125,7 @@ async function login(req, res) {
 }
 
 async function getHomeInfo(req, res) {
-  console.log("here")
+  console.log("here");
   //console.log("here", "token: ", req.info.token, "userrrr:", req.user);
   try {
     const user = await User.findById(req.user.user); //req.user.user contains _id (from payload)
@@ -204,7 +206,7 @@ async function requestResetPassword(req, res) {
     });
 
     const savedToken = await newToken.save();
-  
+
     //const link = `http://localhost:3000/passwordReset?token=${resetToken}&id=${user._id}`;
     const emailResult = await sendEmail(
       user.email,
@@ -239,51 +241,53 @@ async function requestResetPassword(req, res) {
 }
 
 async function resetPassword(req, res) {
-  const { userId, token, password } = req.body;
-  let passwordResetToken = await Token.findOne({ userId });
-
-  if (!token || !userId || !password) {
+  const { email, token, password } = req.body;
+  const user = await User.findOne({ email: email });
+  if (!token || !email || !password) {
     return res.status(400).json({
       message:
         "Invalid reset request. Please provide the necessary parameters.",
     });
   }
-  if (!passwordResetToken) {
-    return res.status(404).json({
-      message: "Invalid or expired token",
+  if (user) {
+    const userId = user._id;
+    let passwordResetToken = await Token.findOne({ userId });
+    if (!passwordResetToken) {
+      return res.status(404).json({
+        message: "Invalid or expired token",
+      });
+    }
+    const isValid = await bcrypt.compare(token, passwordResetToken.token);
+    if (!isValid) {
+      return res.status(404).json({
+        message: "Invalid or expired token",
+      });
+    }
+    const hash = await bcrypt.hash(password, Number(10));
+
+    await User.updateOne(
+      { _id: userId },
+      { $set: { password: hash } },
+      { new: true }
+    );
+    sendEmail(
+      email,
+      "Password Reset Successfully",
+      {
+        name: user.name,
+      },
+      "../utils/template/resetPassword.handlebars"
+    );
+
+    await passwordResetToken.deleteOne();
+
+    return res.status(200).json({
+      message: "Password Reset Successfully",
     });
   }
-
-  const isValid = await bcrypt.compare(token, passwordResetToken.token);
-  if (!isValid) {
-    return res.status(404).json({
-      message: "Invalid or expired token",
-    });
-  }
-  const hash = await bcrypt.hash(password, Number(10));
-
-  await User.updateOne(
-    { _id: userId },
-    { $set: { password: hash } },
-    { new: true }
-  );
-
-  const user = await User.findById({ _id: userId });
-
-  sendEmail(
-    user.email,
-    "Password Reset Successfully",
-    {
-      name: user.name,
-    },
-    "../utils/template/resetPassword.handlebars"
-  );
-
-  await passwordResetToken.deleteOne();
-
-  return res.status(200).json({
-    message: "Password Reset Successfully",
-  });
+  return res.status(404).json({
+    message: "Account not found!"
+  })
 }
 
 async function uploadPhoto(req, res) {
@@ -298,7 +302,7 @@ async function uploadPhoto(req, res) {
     if (!user) {
       return res.status(404).json({
         message: "User not found!",
-      })
+      });
     }
 
     res.status(200).json({
@@ -322,7 +326,8 @@ async function uploadPhoto(req, res) {
     // })
   } catch (error) {
     res.status(500).json({
-      message: "An error occured",error
+      message: "An error occured",
+      error,
     });
   }
 }
@@ -389,14 +394,15 @@ async function getProfile(req, res) {
         level: user.level,
         referrals: user.referrals,
         badges: allBadges,
-        balance: user.availableBalance
+        balance: user.availableBalance,
+        photoUrl: user.photo,
       });
     }
     return res.status(404).json({
       message: "User not found!",
     });
   } catch (error) {
-     res.status(500).json({
+    res.status(500).json({
       message: "An error occured",
     });
   }
@@ -408,7 +414,7 @@ async function activeTiers(req, res) {
     const tier1Referrals = user.tier1Referrals;
     const tier2Referrals = user.tier2Referrals;
 
-    let inActiveTier1= [];
+    let inActiveTier1 = [];
     let inActiveTier2 = [];
 
     const tier1Promises = tier1Referrals.map(async (referralId) => {
@@ -438,7 +444,7 @@ async function activeTiers(req, res) {
       totalTier1: tier1Referrals.length,
       totalTier2: tier2Referrals.length,
       inActiveTier1: inActiveTier1,
-      inActiveTier2: inActiveTier2
+      inActiveTier2: inActiveTier2,
     });
   } catch (error) {
     return res.status(500).json({
@@ -482,7 +488,7 @@ async function getStats(req, res) {
       topUsers: topUsers,
     });
   } catch (error) {
-     res.status(500).json({
+    res.status(500).json({
       message: "An error occured",
     });
   }
@@ -498,9 +504,15 @@ async function deleteAccount(req, res) {
         message: "User not found!",
       });
     }
-    await User.updateMany({tier1Referrals: user._id}, {$pull: {tier1Referrals: user._id}});
-    await User.updateMany({tier2Referrals: user._id}, {$pull: {tier2Referrals: user._id}});
-    await MiningSession.deleteMany({userId: user._id})
+    await User.updateMany(
+      { tier1Referrals: user._id },
+      { $pull: { tier1Referrals: user._id } }
+    );
+    await User.updateMany(
+      { tier2Referrals: user._id },
+      { $pull: { tier2Referrals: user._id } }
+    );
+    await MiningSession.deleteMany({ userId: user._id });
 
     res.status(200).json({
       message: "User deleted successfully!",
@@ -513,36 +525,37 @@ async function deleteAccount(req, res) {
   }
 }
 
-
-async function getInfo(req,res){
+async function getInfo(req, res) {
   try {
     const user = await User.findById(req.user.user);
     const stakedBalance = user.stakingBalance;
     const lastCheckIn = user.lastCheckIn;
     const currentTime = new Date();
-    const nextCheckIn = new Date(lastCheckIn.getTime()+ 24 * 60 * 60 * 1000);
+    const nextCheckIn = new Date(lastCheckIn.getTime() + 24 * 60 * 60 * 1000);
     const timeRemaining = nextCheckIn - currentTime;
-    const hoursRemaining = Math.floor(timeRemaining/(60 * 60 * 1000));
-    const minutesRemaining = Math.floor((timeRemaining % (60 * 60 * 1000))/ (60 * 1000));
-    
+    const hoursRemaining = Math.floor(timeRemaining / (60 * 60 * 1000));
+    const minutesRemaining = Math.floor(
+      (timeRemaining % (60 * 60 * 1000)) / (60 * 1000)
+    );
+
     let stakingPeriod;
-    const staking = await Staking.findOne({userId: user._id, isActive: true}).sort({years: 1}).limit(1);
-    if(staking){
+    const staking = await Staking.findOne({ userId: user._id, isActive: true })
+      .sort({ years: 1 })
+      .limit(1);
+    if (staking) {
       stakingPeriod = staking.years;
-    }
-    else{
-      stakingPeriod = 0
+    } else {
+      stakingPeriod = 0;
     }
     res.status(200).json({
       timeRemaining: `${hoursRemaining}h ${minutesRemaining}m`,
       stakedBalance: stakedBalance,
-      stakedPeriod: stakingPeriod 
-    })
-
+      stakedPeriod: stakingPeriod,
+    });
   } catch (error) {
     res.status(500).json({
-      message: "An error occured!"
-    })
+      message: "An error occured!",
+    });
   }
 }
 
@@ -605,15 +618,17 @@ async function balanceHistory(req, res) {
 }
 
 async function getFormattedHourlyEarnings(sessions) {
-  return sessions.map((session) =>
-    session.hourlyEarnings.map((hourlyEarning) => ({
-      ...hourlyEarning.toObject(),
-      time: new Date(hourlyEarning.time).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    }))
-  ).flat();
+  return sessions
+    .map((session) =>
+      session.hourlyEarnings.map((hourlyEarning) => ({
+        ...hourlyEarning.toObject(),
+        time: new Date(hourlyEarning.time).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }))
+    )
+    .flat();
 }
 
 async function getMiningSessions(startDate, endDate, userId) {
@@ -633,8 +648,6 @@ async function getMiningSessions(startDate, endDate, userId) {
   }
 }
 
-
-
 module.exports = {
   login,
   signUp,
@@ -650,5 +663,5 @@ module.exports = {
   uploadPhoto,
   deleteAccount,
   getInfo,
-  balanceHistory
+  balanceHistory,
 };

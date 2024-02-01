@@ -7,6 +7,9 @@ const jwt = require("jsonwebtoken");
 const secretKey = require("./secret");
 const { hashSync, compareSync } = require("bcrypt");
 const crypto = require("crypto");
+const QrCode = require("qrcode");
+const fs = require("fs").promises;
+const path = require("path");
 
 passport.serializeUser(function (user, done) {
   done(null, user._id);
@@ -47,18 +50,33 @@ passport.use(
               name: profile.displayName,
               password: hashSync(profile.displayName, 10),
             });
-            const userInvitationCode = crypto.randomBytes(10).toString('hex');
-            newUser.invitationCode = userInvitationCode;
             await newUser.save();
+            const userInvitationCode = crypto.randomBytes(10).toString("hex");
+            const qrCodeDirectory = "public/qrCodes";
+            const imagePath = path.join(
+              qrCodeDirectory,
+              `${newUser._id}_qr.png`
+            );
+            await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
+            const generateCode = await QrCode.toFile(
+              imagePath,
+              userInvitationCode
+            );
+            const savedUser = await User.findByIdAndUpdate(
+              newUser._id,
+              {
+                $set: {
+                  qrCodePath: imagePath,
+                  invitationCode: userInvitationCode,
+                },
+              },
+              { new: true }
+            );
+
             user = newUser;
           }
         }
 
-        const payload = {
-          user: user._id,
-        };
-    
-        const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
         return done(null, user);
       } catch (error) {
         return done(error);
@@ -85,4 +103,3 @@ passport.use(
     }
   )
 );
-
