@@ -1,5 +1,6 @@
 const { initializeApp, applicationDefault } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
+const User = require("../src/models/userSchema");
 
 initializeApp({
   credential: applicationDefault(),
@@ -8,13 +9,16 @@ initializeApp({
 
 async function send(req, res) {
   try {
-    const receivedToken = req.body.fcmToken;
+    const user = await User.findById(req.body.userId);
+    const fcmToken = user.fcmToken;
+    const username = req.body.name;
+
     const message = {
       notification: {
-        title: "Notification",
-        body: "This is a test notification",
+        title: "Time to mine!",
+        body: `Your friend ${username} is remininding you to start your mining session`,
       },
-      token: receivedToken,
+      token: fcmToken,
     };
 
     const response = await getMessaging().send(message);

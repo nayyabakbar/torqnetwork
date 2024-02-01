@@ -27,6 +27,7 @@ async function signUp(req, res) {
       });
       const userInvitationCode = crypto.randomBytes(10).toString("hex");
       user.invitationCode = userInvitationCode;
+      user.fcmToken = req.body.fcmToken;
       const saveUser = await user.save();
       const userId = saveUser._id;
       //Create QR Code For Invitation
@@ -107,6 +108,10 @@ async function login(req, res) {
         });
       }
     }
+    
+    const fcm = req.body.fcmToken;
+    await User.findByIdAndUpdate(user._id, {$set: {fcmToken: fcm}})
+
 
     const payload = {
       user: user._id,
@@ -591,23 +596,11 @@ async function balanceHistory(req, res) {
       )
     );
 
-    // Sessions for user-entered date
-    const specificDate = new Date(req.body.date);
-    let specificDateSessions = [];
-    if (specificDate) {
-      specificDateSessions = await getFormattedHourlyEarnings(
-        await getMiningSessions(
-          specificDate,
-          new Date(specificDate).setHours(23, 59, 59, 999),
-          id
-        )
-      );
-    }
+    
     return res.status(200).json({
       dayOld: dayOld,
       weekOld: weekOld,
       monthOld: monthOld,
-      specificDate: specificDateSessions,
     });
   } catch (error) {
     console.error(`Error in balanceHistory: ${error.message}`);
@@ -648,6 +641,31 @@ async function getMiningSessions(startDate, endDate, userId) {
   }
 }
 
+async function balanceHistoryOfSpecificDate(req,res){
+  try{
+    const id = req.user.user;
+    const specificDate = new Date(req.body.date);
+    let specificDateSessions = [];
+    if (specificDate) {
+      specificDateSessions = await getFormattedHourlyEarnings(
+        await getMiningSessions(
+          specificDate,
+          new Date(specificDate).setHours(23, 59, 59, 999),
+          id
+        )
+      );
+    }
+    return res.status(200).json({
+      specificDate: specificDateSessions
+    })
+  }
+  catch(error){
+     res.status(500).json({
+      message: "An error occured!"
+    })
+  }
+}
+
 module.exports = {
   login,
   signUp,
@@ -664,4 +682,5 @@ module.exports = {
   deleteAccount,
   getInfo,
   balanceHistory,
+  balanceHistoryOfSpecificDate
 };

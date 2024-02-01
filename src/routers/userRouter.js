@@ -7,13 +7,11 @@ const multer = require("multer");
 const fs = require('fs');
 const path = require('path');
 
-const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory } = require("../controllers/userController");
+const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate } = require("../controllers/userController");
 const {startMining, startStaking} = require ("../controllers/miningSessionController");
 const {send} = require("../../utils/notifications");
 
 function verifyToken(req, res, next) {
-  console.log("in verify token")
-  console.log("Headers in verifying token:", req.headers);
   const token = req.headers.authorization;
   if (!token) {
     return res.status(401).json({
@@ -85,7 +83,8 @@ router.post("/bonusWheelReward",verifyToken, bonusWheelReward);
 router.get("/activeTiers",verifyToken, activeTiers);
 router.get("/earningCalculator", verifyToken, earningCalculator);
 router.get("/getInfo", verifyToken, getInfo);
-router.get("/balanceHistory", verifyToken, balanceHistory)
+router.get("/balanceHistory", verifyToken, balanceHistory);
+router.get("/balanceHistoryOfSpecificDate", verifyToken, balanceHistoryOfSpecificDate )
 
 router.post("/sendNotification", verifyToken, send);
 

@@ -97,6 +97,10 @@ const userSchema = mongoose.Schema({
     type: String,
     default: "",
   },
+  fcmToken: {
+    type: String,
+    default: ""
+  }
 });
 
 // userSchema.pre("remove", async function (next) {
