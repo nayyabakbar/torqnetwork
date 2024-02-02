@@ -615,9 +615,9 @@ async function getFormattedHourlyEarnings(sessions) {
     .map((session) =>
       session.hourlyEarnings.map((hourlyEarning) => ({
         ...hourlyEarning.toObject(),
-        time: new Date(hourlyEarning.time).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
+        time: new Date(hourlyEarning.time).toLocaleString([], {
+          timeStyle: "short",
+          dateStyle: "short"
         }),
       }))
     )
