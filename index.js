@@ -17,7 +17,7 @@ const marketsRouter = require("./src/routers/marketsRouter.js");
 
 app.use(session({secret: secretKey, resave: false,saveUninitialized: false}));
   
-app.use(cors())
+app.use(cors({origin: '*'}));
 app.use(express.json());
 app.use(express.static('public'));
 app.use(passport.initialize())
