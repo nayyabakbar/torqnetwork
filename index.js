@@ -21,7 +21,7 @@ app.use(cors({origin: '*', credentials: true}));
 app.use(express.json());
 app.use(express.static('public'));
 app.use(passport.initialize())
-app.use(passport.session())
+app.use(passport.session()) 
 app.use(userRouter);
 app.use(marketsRouter);
 

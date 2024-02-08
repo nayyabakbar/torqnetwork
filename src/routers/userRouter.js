@@ -7,7 +7,7 @@ const multer = require("multer");
 const fs = require('fs');
 const path = require('path');
 
-const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate } = require("../controllers/userController");
+const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate, getNotifications } = require("../controllers/userController");
 const {startMining, startStaking} = require ("../controllers/miningSessionController");
 const {send} = require("../../utils/notifications");
 
@@ -87,6 +87,7 @@ router.get("/balanceHistory", verifyToken, balanceHistory);
 router.get("/balanceHistoryOfSpecificDate", verifyToken, balanceHistoryOfSpecificDate )
 
 router.post("/sendNotification", verifyToken, send);
+router.get("/getNotifications",verifyToken, getNotifications)
 
 async function generateToken(req,res,next){
   const user = req.user;

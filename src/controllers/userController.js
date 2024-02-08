@@ -666,6 +666,20 @@ async function balanceHistoryOfSpecificDate(req,res){
   }
 }
 
+async function getNotifications(req,res){
+  try{
+    const notifications = await Notification.find({receiverId: req.user.user});
+    res.status(200).json({
+      notifications: notifications
+    })
+  }
+  catch(error){
+    res.status(500).json({
+      message: "An error occured!"
+    })
+  }
+}
+
 module.exports = {
   login,
   signUp,
@@ -682,5 +696,6 @@ module.exports = {
   deleteAccount,
   getInfo,
   balanceHistory,
-  balanceHistoryOfSpecificDate
+  balanceHistoryOfSpecificDate,
+  getNotifications
 };
