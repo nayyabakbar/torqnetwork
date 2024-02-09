@@ -6,6 +6,7 @@ const { hashSync, compareSync } = require("bcrypt");
 const User = require("../models/userSchema");
 const MiningSession = require("../models/miningSessionSchema");
 const Staking = require("../models/stakingSchema");
+const Notification = require("../models/notificationSchema");
 const constants = require("../constants");
 const crypto = require("crypto");
 const Token = require("../models/tokenSchema");
@@ -709,6 +710,22 @@ async function googleAuth(req, res) {
   }
 }
 
+async function getNotifications(req,res){
+  try{
+    
+    const notifications = await Notification.find({receiverId: req.user.user});
+    console.log("dggg", notifications)
+    res.status(200).json({
+      notifications: notifications
+    })
+  }
+  catch(error){
+    res.status(500).json({
+      message: "An error occured!"
+    })
+  }
+}
+
 module.exports = {
   login,
   signUp,
@@ -726,5 +743,6 @@ module.exports = {
   getInfo,
   balanceHistory,
   balanceHistoryOfSpecificDate,
+  getNotifications,
   googleAuth
 };
