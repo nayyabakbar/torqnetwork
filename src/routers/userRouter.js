@@ -7,7 +7,7 @@ const multer = require("multer");
 const fs = require('fs');
 const path = require('path');
 
-const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate, getNotifications } = require("../controllers/userController");
+const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate, getNotifications, googleAuth } = require("../controllers/userController");
 const {startMining, startStaking} = require ("../controllers/miningSessionController");
 const {send} = require("../../utils/notifications");
 
@@ -57,6 +57,9 @@ router.post("/requestResetPassword", requestResetPassword);
 router.post("/resetPassword", resetPassword);
 router.post("/uploadPhoto",verifyToken, uploadFile, uploadPhoto)
 
+
+router.post("/googleAuth", googleAuth);
+
 router.get("/google", passport.authenticate('google', {scope: ['profile', 'email']}));
 router.get(
   "/google/callback",
@@ -84,7 +87,7 @@ router.get("/activeTiers",verifyToken, activeTiers);
 router.get("/earningCalculator", verifyToken, earningCalculator);
 router.get("/getInfo", verifyToken, getInfo);
 router.get("/balanceHistory", verifyToken, balanceHistory);
-router.get("/balanceHistoryOfSpecificDate", verifyToken, balanceHistoryOfSpecificDate )
+router.post("/balanceHistoryOfSpecificDate", verifyToken, balanceHistoryOfSpecificDate )
 
 router.post("/sendNotification", verifyToken, send);
 router.get("/getNotifications",verifyToken, getNotifications)
