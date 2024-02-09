@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 const secretKey = require("../../config/secret");
 const bcrypt = require("bcrypt");
 const { hashSync, compareSync } = require("bcrypt");
@@ -108,10 +109,9 @@ async function login(req, res) {
         });
       }
     }
-    
-    const fcm = req.body.fcmToken;
-    await User.findByIdAndUpdate(user._id, {$set: {fcmToken: fcm}})
 
+    const fcm = req.body.fcmToken;
+    await User.findByIdAndUpdate(user._id, { $set: { fcmToken: fcm } });
 
     const payload = {
       user: user._id,
@@ -291,8 +291,8 @@ async function resetPassword(req, res) {
     });
   }
   return res.status(404).json({
-    message: "Account not found!"
-  })
+    message: "Account not found!",
+  });
 }
 
 async function uploadPhoto(req, res) {
@@ -596,7 +596,6 @@ async function balanceHistory(req, res) {
       )
     );
 
-    
     return res.status(200).json({
       dayOld: dayOld,
       weekOld: weekOld,
@@ -617,7 +616,7 @@ async function getFormattedHourlyEarnings(sessions) {
         ...hourlyEarning.toObject(),
         time: new Date(hourlyEarning.time).toLocaleString([], {
           timeStyle: "short",
-          dateStyle: "short"
+          dateStyle: "short",
         }),
       }))
     )
@@ -641,8 +640,8 @@ async function getMiningSessions(startDate, endDate, userId) {
   }
 }
 
-async function balanceHistoryOfSpecificDate(req,res){
-  try{
+async function balanceHistoryOfSpecificDate(req, res) {
+  try {
     const id = req.user.user;
     const specificDate = new Date(req.body.date);
     let specificDateSessions = [];
@@ -656,13 +655,57 @@ async function balanceHistoryOfSpecificDate(req,res){
       );
     }
     return res.status(200).json({
-      specificDate: specificDateSessions
-    })
+      specificDate: specificDateSessions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occured!",
+    });
   }
-  catch(error){
-     res.status(500).json({
-      message: "An error occured!"
-    })
+}
+
+async function googleAuth(req, res) {
+  try {
+    const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+    const client = new OAuth2Client(CLIENT_ID);
+    const { idToken } = req.body;
+    const ticket = await client.verifyIdToken({ idToken, audience: CLIENT_ID });
+    const payload = ticket.getPayload();
+    const { sub, email, name } = payload;
+    let user = await User.findOne({ googleId: sub });
+    if (!user) {
+      user = new User({
+        googleId: sub,
+        email,
+        name,
+        password: email,
+      });
+      await user.save();
+      const userInvitationCode = crypto.randomBytes(10).toString("hex");
+      const qrCodeDirectory = "public/qrCodes";
+      const imagePath = path.join(qrCodeDirectory, `${user._id}_qr.png`);
+      await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
+      const generateCode = await QrCode.toFile(imagePath, userInvitationCode);
+      const savedUser = await User.findByIdAndUpdate(
+        user._id,
+        {
+          $set: {
+            qrCodePath: imagePath,
+            invitationCode: userInvitationCode,
+          },
+        },
+        { new: true }
+      );
+    }
+    const token = jwt.sign({ user: user._id }, secretKey, { expiresIn: "1h" });
+    res.status(200).json({
+      user: user,
+      token: "Bearer " + token,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occured!",
+    });
   }
 }
 
@@ -682,5 +725,6 @@ module.exports = {
   deleteAccount,
   getInfo,
   balanceHistory,
-  balanceHistoryOfSpecificDate
+  balanceHistoryOfSpecificDate,
+  googleAuth
 };
