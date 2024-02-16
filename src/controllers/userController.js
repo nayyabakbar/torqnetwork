@@ -154,7 +154,7 @@ async function getHomeInfo(req, res) {
           (constants.tier2ReferralBonusPercentage * 100);
         bonusWheelBonus = session.bonusWheel;
         coins = ((tier1Bonus + tier2Bonus) / 100) * constants.baseMiningRate;
-        hourlyEarnings = session.hourlyEarnings;
+        hourlyEarnings = session.hourlyEarnings.reverse();
         const arrayLength = hourlyEarnings.length;
         if (arrayLength !== 0) {
           currentEarningRate = hourlyEarnings[arrayLength - 1].earning;

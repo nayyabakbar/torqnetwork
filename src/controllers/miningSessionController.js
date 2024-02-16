@@ -87,6 +87,8 @@ function processHourlyEarnings(userId, sessionId) {
   const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
   const endTime2 = new Date(endTime.getTime() + 1 * 60 * 1000);
 
+  getHourlyEarnings(userId, sessionId);
+
   const job = schedule.scheduleJob(endTime2, async function () {
     try {
       const updateUserRank = await updateRank(userId);
@@ -121,8 +123,10 @@ async function getHourlyEarnings(userId, sessionId) {
     userId,
     "T2"
   );
-  console.log("tier 1", tier1Count);
-  console.log("tier 2", tier2Count);
+  console.log("tier 1 count", tier1Count);
+  console.log("tier 2 count", tier2Count);
+  console.log("tier 1 Bonus", tier1Count);
+  console.log("tier 2 bonus", tier2Count);
 
   const session = await MiningSession.findById(sessionId);
   const bonusPercentage = session.bonusWheel/100;
