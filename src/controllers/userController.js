@@ -398,7 +398,7 @@ async function bonusWheelReward(req, res) {
       const user = await User.findById(req.user.user);
       const availableBalance = user.availableBalance
       user.availableBalance = Number((availableBalance+amount).toFixed(2));
-      
+
       await user.save();
       await session.save();
 
@@ -451,25 +451,27 @@ async function activeTiers(req, res) {
 
     let inActiveTier1 = [];
     let inActiveTier2 = [];
-
+    
     const tier1Promises = tier1Referrals.map(async (referralId) => {
-      const session = await MiningSession.findOne({
+      const session = await MiningSession.find({
         userId: referralId,
-        isActive: false,
       });
-      if (session) {
-        const user = await User.findById(session.userId);
+      
+      const checking = session.every(sess=> !sess.isActive);
+      if(checking){
+        const user = await User.findById(referralId);
         inActiveTier1.push(user);
       }
     });
 
     const tier2Promises = tier2Referrals.map(async (referralId) => {
-      const session = await MiningSession.findOne({
+      const session = await MiningSession.find({
         userId: referralId,
-        isActive: false,
       });
-      if (session) {
-        const user = await User.findById(session.userId);
+      
+      const checking = session.every(sess=> !sess.isActive);
+      if(checking){
+        const user = await User.findById(referralId);
         inActiveTier2.push(user);
       }
     });
@@ -482,11 +484,13 @@ async function activeTiers(req, res) {
       inActiveTier2: inActiveTier2,
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
-      message: "An error occured",
+      message: "An error occured", error
     });
   }
 }
+
 
 async function earningCalculator(req, res) {
   try {

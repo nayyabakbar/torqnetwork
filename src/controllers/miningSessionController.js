@@ -147,7 +147,7 @@ async function getHourlyEarnings(userId, sessionId) {
   const hourlyEarnings = {
     earning: hourlyMiningRate,
     time: new Date(),
-    percentage: Number(((constants.baseMiningRate / hourlyMiningRate) * 100).toFixed(2)),
+    percentage: Number(((hourlyMiningRate / constants.baseMiningRate) * 100).toFixed(2)),
   };
 
   session.activeTier1Count = tier1Count;
