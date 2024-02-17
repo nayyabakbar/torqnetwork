@@ -694,6 +694,7 @@ async function getNotifications(req,res){
     })
   }
   catch(error){
+    console.log(error)
     res.status(500).json({
       message: "An error occured!", error
     })
@@ -759,6 +760,7 @@ async function googleAuth(req, res) {
       token: "Bearer " + token,
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({
       message: "An error occured!", error
     });
