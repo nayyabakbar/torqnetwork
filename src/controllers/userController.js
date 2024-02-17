@@ -30,12 +30,32 @@ async function signUp(req, res) {
       user.fcmToken = req.body.fcmToken;
       const saveUser = await user.save();
       const userId = saveUser._id;
+
+      //Assign rank
+      const users = await User.aggregate( [
+        {
+           $setWindowFields: {
+              sortBy: { availableBalance: -1 },
+              output: {
+                 rank: {
+                    $denseRank: {}
+                 }
+              }
+           }
+        }
+     ])
+     const rankingUser = users.find(item=> item._id.equals(userId));
+     var newRank = 0;
+     if(rankingUser){
+       newRank = rankingUser.rank;  
+     }      
+
       //Create QR Code For Invitation
       const qrCodeDirectory = "public/qrCodes";
       const imagePath = path.join(qrCodeDirectory, `${userId}_qr.png`);
       await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
       const generateCode = await QrCode.toFile(imagePath, user.invitationCode);
-      await User.findByIdAndUpdate(userId, { $set: { qrCodePath: imagePath } });
+      await User.findByIdAndUpdate(userId, { $set: { qrCodePath: imagePath, rank: newRank } });
 
       //Check for invitation code
       const invitationCode = req.body.invitationCode;
@@ -154,7 +174,7 @@ async function getHomeInfo(req, res) {
           (constants.tier2ReferralBonusPercentage * 100);
         bonusWheelBonus = session.bonusWheel;
         coins = ((tier1Bonus + tier2Bonus) / 100) * constants.baseMiningRate;
-        hourlyEarnings = session.hourlyEarnings.reverse();
+        hourlyEarnings = session.hourlyEarnings;
         const arrayLength = hourlyEarnings.length;
         if (arrayLength !== 0) {
           currentEarningRate = hourlyEarnings[arrayLength - 1].earning;
@@ -172,7 +192,7 @@ async function getHomeInfo(req, res) {
         rank: user.rank,
         tier1Referrals: user.tier1Referrals.length,
         tier2Referrals: user.tier2Referrals.length,
-        hourlyEarnings: hourlyEarnings,
+        hourlyEarnings: hourlyEarnings.reverse(),
       });
     }
   } catch (error) {
@@ -675,7 +695,7 @@ async function getNotifications(req,res){
   }
   catch(error){
     res.status(500).json({
-      message: "An error occured!"
+      message: "An error occured!", error
     })
   }
 }
@@ -697,6 +717,24 @@ async function googleAuth(req, res) {
         password: email,
       });
       await user.save();
+        //Assign rank
+     const users = await User.aggregate( [
+      {
+         $setWindowFields: {
+            sortBy: { availableBalance: -1 },
+            output: {
+               rank: {
+                  $denseRank: {}
+               }
+            }
+         }
+      }
+   ])
+   const rankingUser = users.find(item=> item._id.equals(user._id));
+   var newRank = 0;
+   if(rankingUser){
+     newRank = rankingUser.rank;
+   } 
       const userInvitationCode = crypto.randomBytes(10).toString("hex");
       const qrCodeDirectory = "public/qrCodes";
       const imagePath = path.join(qrCodeDirectory, `${user._id}_qr.png`);
@@ -708,11 +746,13 @@ async function googleAuth(req, res) {
           $set: {
             qrCodePath: imagePath,
             invitationCode: userInvitationCode,
+            rank: newRank
           },
         },
         { new: true }
       );
     }
+   
     const token = jwt.sign({ user: user._id }, secretKey, { expiresIn: "1h" });
     res.status(200).json({
       user: user,
@@ -720,7 +760,7 @@ async function googleAuth(req, res) {
     });
   } catch (error) {
     res.status(500).json({
-      message: "An error occured!",
+      message: "An error occured!", error
     });
   }
 }
