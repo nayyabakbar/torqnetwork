@@ -708,6 +708,10 @@ async function googleAuth(req, res) {
     const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
     const client = new OAuth2Client(CLIENT_ID);
     const { idToken } = req.body;
+    console.log(req.body);
+    console.log(payload.aud);
+    console.log(idToken);
+    console.log(ClIENT_ID)
     const ticket = await client.verifyIdToken({ idToken, audience: CLIENT_ID });
     const payload = ticket.getPayload();
     const { sub, email, name } = payload;
