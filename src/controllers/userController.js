@@ -709,7 +709,7 @@ async function googleAuth(req, res) {
     const client = new OAuth2Client(CLIENT_ID);
     const { idToken } = req.body;
     console.log("body is", req.body);
-    console.log("payload is", payload.aud);
+    
     console.log("id token is",idToken);
     console.log("client id is", CLIENT_ID)
     const ticket = await client.verifyIdToken({ idToken, audience: CLIENT_ID });
