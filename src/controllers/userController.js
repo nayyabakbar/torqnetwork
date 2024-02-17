@@ -139,7 +139,7 @@ async function login(req, res) {
       user: user._id,
     };
 
-    const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
+    const token = jwt.sign(payload, secretKey, { expiresIn: "24h" });
     res.status(200).json({
       user: user,
       token: "Bearer " + token,
@@ -772,7 +772,7 @@ async function googleAuth(req, res) {
       );
     }
    
-    const token = jwt.sign({ user: user._id }, secretKey, { expiresIn: "1h" });
+    const token = jwt.sign({ user: user._id }, secretKey, { expiresIn: "24h" });
     res.status(200).json({
       user: user,
       token: "Bearer " + token,
