@@ -392,6 +392,14 @@ async function bonusWheelReward(req, res) {
     });
     if (session && session.bonusWheel === 0) {
       session.bonusWheel = rewardAmount;
+      const amount = (rewardAmount/100)* constants.baseMiningRate;
+      const hourlyEarnings = session.hourlyEarnings.reverse();
+      hourlyEarnings[0].earning += amount;
+      const user = await User.findById(req.user.user);
+      const availableBalance = user.availableBalance
+      user.availableBalance = Number((availableBalance+amount).toFixed(2));
+      
+      await user.save();
       await session.save();
 
       return res.status(200).json({
