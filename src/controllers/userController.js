@@ -719,11 +719,8 @@ async function googleAuth(req, res) {
   try {
     const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
     const client = new OAuth2Client(CLIENT_ID);
-    const { idToken } = req.body;
-    console.log("body is", req.body);
+    const { idToken, fcmToken } = req.body;
     
-    console.log("id token is",idToken);
-    console.log("client id is", CLIENT_ID)
     const ticket = await client.verifyIdToken({ idToken, audience: CLIENT_ID });
     const payload = ticket.getPayload();
     const { sub, email, name } = payload;
@@ -765,7 +762,8 @@ async function googleAuth(req, res) {
           $set: {
             qrCodePath: imagePath,
             invitationCode: userInvitationCode,
-            rank: newRank
+            rank: newRank,
+            fcmToken: fcmToken
           },
         },
         { new: true }
