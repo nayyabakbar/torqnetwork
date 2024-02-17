@@ -5,6 +5,7 @@ const { hashSync, compareSync } = require("bcrypt");
 const User = require("../models/userSchema");
 const MiningSession = require("../models/miningSessionSchema");
 const Staking = require("../models/stakingSchema");
+const Notification = require("../models/notificationSchema");
 const constants = require("../constants");
 const crypto = require("crypto");
 const Token = require("../models/tokenSchema");
@@ -15,6 +16,7 @@ const QrCode = require("qrcode");
 const fs = require("fs").promises;
 const path = require("path");
 const cloudinary = require("../../config/cloudinary");
+const { OAuth2Client } = require('google-auth-library');
 
 async function signUp(req, res) {
   try {
