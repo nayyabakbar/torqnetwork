@@ -169,13 +169,13 @@ async function getHomeInfo(req, res) {
     if (user) {
       if (session) {
         tier1Bonus =
-          session.inActiveTier1Count *
+          session.activeTier1Count *
           (constants.tier1ReferralBonusPercentage * 100); //*100 because we have to calculate percentage
         tier2Bonus =
-          session.inActiveTier2Count *
+          session.activeTier2Count *
           (constants.tier2ReferralBonusPercentage * 100);
         bonusWheelBonus = session.bonusWheel;
-        coins = ((tier1Bonus + tier2Bonus) / 100) * constants.baseMiningRate;
+        //  coins = ((tier1Bonus + tier2Bonus) / 100) * constants.baseMiningRate;
         hourlyEarnings = session.hourlyEarnings;
         const arrayLength = hourlyEarnings.length;
         if (arrayLength !== 0) {
@@ -189,7 +189,7 @@ async function getHomeInfo(req, res) {
         stakingBalance: user.stakingBalance,
         currentEarningRate: currentEarningRate,
         bonusOfReferral: tier1Bonus + tier2Bonus,
-        coins: coins,
+        //  coins: coins,
         bonusWheelBonus: bonusWheelBonus,
         rank: user.rank,
         tier1Referrals: user.tier1Referrals.length,
@@ -390,11 +390,16 @@ async function bonusWheelReward(req, res) {
       userId: req.user.user,
       isActive: true,
     });
+    
     if (session && session.bonusWheel === 0) {
+      console.log("amount", rewardAmount);
       session.bonusWheel = rewardAmount;
       const amount = (rewardAmount/100)* constants.baseMiningRate;
       const hourlyEarnings = session.hourlyEarnings.reverse();
+      const previousEarning = hourlyEarnings[0].earning;
       hourlyEarnings[0].earning += amount;
+      const percentage = Number(((previousEarning + amount / constants.baseMiningRate) * 100).toFixed(2));
+      hourlyEarnings[0].percentage = percentage;
       const user = await User.findById(req.user.user);
       const availableBalance = user.availableBalance
       user.availableBalance = Number((availableBalance+amount).toFixed(2));
@@ -420,9 +425,7 @@ async function getProfile(req, res) {
     const user = await User.findById(req.user.user);
     if (user) {
       const level = user.level;
-      const allBadges = badges
-        .filter((badge) => badge.level <= level)
-        .reverse();
+      const allBadges = badges.filter((badge) => badge.level <= level).reverse();
       return res.status(200).json({
         name: user.name,
         rank: user.rank,

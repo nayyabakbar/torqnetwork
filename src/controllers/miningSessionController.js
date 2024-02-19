@@ -84,7 +84,7 @@ async function startMining(req, res) {
 
 function processHourlyEarnings(userId, sessionId) {
   const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+  const endTime = new Date(startTime.getTime() + 23 * 60 * 60 * 1000);
   const endTime2 = new Date(endTime.getTime() + 1 * 60 * 1000);
   const minute = startTime.getMinutes();
   const cronJobRule = `${minute} * * * *`;
@@ -92,7 +92,7 @@ function processHourlyEarnings(userId, sessionId) {
 
   const job = schedule.scheduleJob(endTime2, async function () {
     try {
-      const updateUserRank = await updateRank(userId);
+     
       const session = await MiningSession.findByIdAndUpdate(
         sessionId,
         { $set: { isActive: false } },
@@ -144,13 +144,14 @@ async function getHourlyEarnings(userId, sessionId) {
   const availableBalance = user.availableBalance
   user.availableBalance = Number((availableBalance+hourlyMiningRate).toFixed(2));
   await user.save();
+  const updateUserRank = await updateRank(userId);
 
   const hourlyEarnings = {
     earning: hourlyMiningRate,
     time: new Date(),
     percentage: Number(((hourlyMiningRate / constants.baseMiningRate) * 100).toFixed(2)),
   };
-
+  
   session.activeTier1Count = tier1Count;
   session.activeTier2Count = tier2Count;
   session.hourlyEarnings.push(hourlyEarnings);
