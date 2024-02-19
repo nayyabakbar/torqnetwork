@@ -38,10 +38,18 @@ async function startMining(req, res) {
     const user = await User.findById(req.user.user); //req.user.user contains _id (from payload)
     const currentDate = new Date();
     const lastCheckIn = user.lastCheckIn;
+    const sessions = await MiningSession.find({userId: req.user.user});
+    
+    if(sessions.length === 0){
+      const bonus = 10 * constants.baseMiningRate;
+      user.availableBalance += bonus;
+      await user.save();
+    }
     const activeSession = await MiningSession.findOne({
       userId: user._id,
       isActive: true,
     });
+   
     if (!activeSession) {
       const newSession = new MiningSession({
         userId: user._id,
@@ -81,6 +89,8 @@ async function startMining(req, res) {
     });
   }
 }
+
+
 
 function processHourlyEarnings(userId, sessionId) {
   const startTime = new Date();

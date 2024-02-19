@@ -17,6 +17,7 @@ const fs = require("fs").promises;
 const path = require("path");
 const cloudinary = require("../../config/cloudinary");
 const { OAuth2Client } = require('google-auth-library');
+const {sendNotificationOnReferral} = require('../../utils/notifications')
 
 async function signUp(req, res) {
   try {
@@ -65,7 +66,7 @@ async function signUp(req, res) {
       if (!invitationCode == "") {
         const inviter = await User.findOne({ invitationCode: invitationCode });
         const calculateLevel = (referrals) =>
-          Math.round(Math.pow(referrals + 1, 1 / 3));
+            Math.round(Math.cbrt(referrals));
         const level = calculateLevel(inviter.referrals);
         if (!inviter) {
           return res.status(404).json({
@@ -84,9 +85,11 @@ async function signUp(req, res) {
               primaryInviter.tier2Referrals.push(saveUser.id);
               primaryInviter.level = primaryLevel;
               await primaryInviter.save();
+              sendNotificationOnReferral(primaryInviter._id, saveUser._id)
             }
             await saveUser.save();
             await inviter.save();
+            sendNotificationOnReferral(inviter._id, saveUser._id)
           } catch (error) {
             console.log(error);
           }
@@ -319,18 +322,23 @@ async function resetPassword(req, res) {
 
 async function uploadPhoto(req, res) {
   try {
-    const user = await User.findByIdAndUpdate(
-      req.user.user,
-      {
-        photo: req.file.filename,
-      },
-      { new: true }
-    );
+   
+    const user = await User.findById(req.user.user);
     if (!user) {
       return res.status(404).json({
         message: "User not found!",
       });
     }
+
+    if (user.photo == ""){
+      const bonus = 10 * constants.baseMiningRate;
+      user.availableBalance += bonus;
+      
+    }
+    
+    user.photo = req.file.filename;
+    await user.save();
+
 
     res.status(200).json({
       success: true,
@@ -390,7 +398,6 @@ async function bonusWheelReward(req, res) {
       userId: req.user.user,
       isActive: true,
     });
-    
     if (session && session.bonusWheel === 0) {
       console.log("amount", rewardAmount);
       session.bonusWheel = rewardAmount;
@@ -454,16 +461,21 @@ async function activeTiers(req, res) {
 
     let inActiveTier1 = [];
     let inActiveTier2 = [];
-    
+    let activeTier1 = [];
+    let activeTier2 = [];
+
     const tier1Promises = tier1Referrals.map(async (referralId) => {
       const session = await MiningSession.find({
         userId: referralId,
       });
       
       const checking = session.every(sess=> !sess.isActive);
-      if(checking){
-        const user = await User.findById(referralId);
+      const user = await User.findById(referralId);
+      if(checking){ 
         inActiveTier1.push(user);
+      }
+      else{
+        activeTier1.push(user);
       }
     });
 
@@ -473,9 +485,12 @@ async function activeTiers(req, res) {
       });
       
       const checking = session.every(sess=> !sess.isActive);
+      const user = await User.findById(referralId);
       if(checking){
-        const user = await User.findById(referralId);
         inActiveTier2.push(user);
+      }
+      else{
+        activeTier2.push(user);
       }
     });
 
@@ -485,6 +500,8 @@ async function activeTiers(req, res) {
       totalTier2: tier2Referrals.length,
       inActiveTier1: inActiveTier1,
       inActiveTier2: inActiveTier2,
+      activeTier1: activeTier1,
+      activeTier2: activeTier2
     });
   } catch (error) {
     console.log(error);
@@ -786,6 +803,23 @@ async function googleAuth(req, res) {
   }
 }
 
+async function getStakingInfo(req,res){
+  try{
+    const user = await User.findById(req.user.user);
+    const stakings = await Staking.find({userId: user._id}).sort({createdAt: -1});
+    return res.status(200).json({
+      stakedBalance: user.stakingBalance,
+      staking: stakings
+    })
+  }
+  catch (error) {
+    console.log(error)
+    res.status(500).json({
+      message: "An error occured!", error
+    });
+}
+}
+
 module.exports = {
   login,
   signUp,
@@ -804,5 +838,9 @@ module.exports = {
   balanceHistory,
   balanceHistoryOfSpecificDate,
   getNotifications,
-  googleAuth
+  googleAuth,
+  getStakingInfo
 };
+
+
+

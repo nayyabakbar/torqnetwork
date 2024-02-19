@@ -14,10 +14,55 @@ async function send(req, res) {
     const senderUser = await User.findById(req.user.user);
     const fcmToken = receivingUser.fcmToken;
     const username = senderUser.name;
-    const notificationMessage = {
-      title: "Time to mine!",
-      body: `Your friend ${username} is reminding you to start your mining session`,
+    const {notificationType, data, toggle} = req.body
+   
+    var notificationMessage;
+    if(notificationType == "ping"){
+      notificationMessage = {
+        title: "Time to mine!",
+        body: `Your friend ${username} is reminding you to start your mining session`,
+      };
+    }
+
+    else{
+      notificationMessage = {
+        title: "Congratulations!",
+        body: `Your earned ${data} bonus`,
+        };
+    }
+
+    const message = {
+      notification: notificationMessage,
+      token: fcmToken,
     };
+
+    if(toggle == "on"){
+      const response = await getMessaging().send(message);
+    }
+
+
+    const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}})
+    await newNotification.save();
+
+    res.status(200).json({ message: "Notification sent successfully" });
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "Error sending notification" });
+  }
+}
+
+async function sendNotificationOnReferral(receiver,sender){
+  try {
+    const receivingUser = await User.findById(receiver);
+    const senderUser = await User.findById(sender);
+    const fcmToken = receivingUser.fcmToken;
+    const username = senderUser.name;
+
+    const notificationMessage = {
+      title: "Someone joined with your invitation Code!",
+      body: ` ${username} just joined with your invitation Code!`,
+    };
+    
     const message = {
       notification: notificationMessage,
       token: fcmToken,
@@ -36,6 +81,4 @@ async function send(req, res) {
   }
 }
 
-
-
-module.exports = {send}
+module.exports = {send, sendNotificationOnReferral}
