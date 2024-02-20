@@ -14,7 +14,7 @@ async function send(req, res) {
     const senderUser = await User.findById(req.user.user);
     const fcmToken = receivingUser.fcmToken;
     const username = senderUser.name;
-    const {notificationType, data, toggle} = req.body
+    const {notificationType, data} = req.body
    
     var notificationMessage;
     if(notificationType == "ping"){
@@ -36,10 +36,10 @@ async function send(req, res) {
       token: fcmToken,
     };
 
-    if(toggle == "on"){
+    if (receivingUser.enableNotification){
       const response = await getMessaging().send(message);
+      console.log("Successfully sent message:", response);
     }
-
 
     const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}})
     await newNotification.save();
@@ -51,30 +51,43 @@ async function send(req, res) {
   }
 }
 
-async function sendNotificationOnReferral(receiver,sender){
+async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
   try {
     const receivingUser = await User.findById(receiver);
     const senderUser = await User.findById(sender);
     const fcmToken = receivingUser.fcmToken;
     const username = senderUser.name;
+    var notificationMessage;
 
-    const notificationMessage = {
-      title: "Someone joined with your invitation Code!",
-      body: ` ${username} just joined with your invitation Code!`,
-    };
+    if (type === "bonus"){
+      notificationMessage = {
+        title: `Congratulations! you just earned ${bonus}torq bonus`,
+        body: "5 people have joined from your invitation code",
+      };
+    }
+    else {
+      notificationMessage = {
+        title: "Someone joined with your invitation Code!",
+        body: ` ${username} just joined with your invitation Code!`,
+      };
+    }
     
+
     const message = {
       notification: notificationMessage,
       token: fcmToken,
     };
 
-    const response = await getMessaging().send(message);
-    console.log("Successfully sent message:", response);
+    if (receivingUser.enableNotification){
+      const response = await getMessaging().send(message);
+      console.log("Successfully sent message:", response);
+    }
 
+    
     const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}})
     await newNotification.save();
+    return;
 
-    res.status(200).json({ message: "Notification sent successfully" });
   } catch (error) {
     console.error("Error sending message:", error);
     res.status(500).json({ error: "Error sending notification" });

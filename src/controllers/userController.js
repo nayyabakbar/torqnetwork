@@ -78,6 +78,11 @@ async function signUp(req, res) {
             inviter.tier1Referrals.push(saveUser._id);
             inviter.referrals += 1;
             inviter.level = level;
+            const increaseBonus = 10 * constants.baseMiningRate;
+            if(inviter.referrals === 5){
+              inviter.availableBalance +=  increaseBonus;
+              sendNotificationOnReferral(inviter._id, inviter._id, type = "bonus", bonus = increaseBonus)
+            }
             if (inviter.inviter) {
               const primaryInviter = await User.findById(inviter.inviter);
               let primaryLevel = calculateLevel(primaryInviter.referrals + 1);
@@ -85,7 +90,12 @@ async function signUp(req, res) {
               primaryInviter.tier2Referrals.push(saveUser.id);
               primaryInviter.level = primaryLevel;
               await primaryInviter.save();
-              sendNotificationOnReferral(primaryInviter._id, saveUser._id)
+              sendNotificationOnReferral(primaryInviter._id, saveUser._id);
+              if(primaryInviter.referrals === 5){
+                primaryInviter.availableBalance +=  increaseBonus;
+                sendNotificationOnReferral(primaryInviter._id, primaryInviter._id, type = "bonus", bonus = increaseBonus)
+              }
+              
             }
             await saveUser.save();
             await inviter.save();
@@ -406,7 +416,11 @@ async function bonusWheelReward(req, res) {
       const previousEarning = hourlyEarnings[0].earning;
       hourlyEarnings[0].earning += amount;
       const percentage = Number(((previousEarning + amount / constants.baseMiningRate) * 100).toFixed(2));
+      console.log("before calculation", hourlyEarnings[0].percentage);
+      console.log(" calculation", percentage);
       hourlyEarnings[0].percentage = percentage;
+      console.log("after calculation", hourlyEarnings[0].percentage);
+
       const user = await User.findById(req.user.user);
       const availableBalance = user.availableBalance
       user.availableBalance = Number((availableBalance+amount).toFixed(2));
@@ -722,7 +736,7 @@ async function balanceHistoryOfSpecificDate(req,res){
 
 async function getNotifications(req,res){
   try{
-    const notifications = await Notification.find({receiverId: req.user.user});
+    const notifications = await Notification.find({receiverId: req.user.user}).sort({createdAt: 1})
     res.status(200).json({
       notifications: notifications
     })
@@ -820,6 +834,26 @@ async function getStakingInfo(req,res){
 }
 }
 
+async function toggleNotification(req,res){
+  try{
+    const user = await User.findById(req.user.user);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    user.enableNotification = !user.enableNotification;
+    await user.save();
+    return res.status(200).json({
+      message: "Notification toggled successfully"
+    })
+  }
+  catch (error) {
+    console.log(error)
+    res.status(500).json({
+      message: "An error occured!", error
+    });
+  }
+}
+
 module.exports = {
   login,
   signUp,
@@ -839,7 +873,8 @@ module.exports = {
   balanceHistoryOfSpecificDate,
   getNotifications,
   googleAuth,
-  getStakingInfo
+  getStakingInfo,
+  toggleNotification
 };
 
 

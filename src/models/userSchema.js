@@ -100,7 +100,12 @@ const userSchema = mongoose.Schema({
   fcmToken: {
     type: String,
     default: ""
-  }
+  },
+  enableNotification: {
+    type: Boolean,
+    default: true
+  },
+  
 });
 
 // userSchema.pre("remove", async function (next) {
