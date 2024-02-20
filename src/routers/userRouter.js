@@ -9,6 +9,8 @@ const path = require('path');
 
 const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate, getNotifications, googleAuth, getStakingInfo, toggleNotification } = require("../controllers/userController");
 const {startMining, startStaking} = require ("../controllers/miningSessionController");
+const {personalInfo} = require ("../controllers/kycController");
+
 const {send} = require("../../utils/notifications");
 
 function verifyToken(req, res, next) {
@@ -31,7 +33,6 @@ function verifyToken(req, res, next) {
 }
 
 // Multer Middleware
-
 const uploadFile = multer({
   storage: multer.diskStorage({
     destination: function(req,file,cb){
@@ -94,6 +95,8 @@ router.get("/getStakingInfo", verifyToken, getStakingInfo);
 router.post("/sendNotification", verifyToken, send);
 router.get("/getNotifications",verifyToken, getNotifications);
 router.post("/toggleNotification", verifyToken, toggleNotification);
+
+router.post("/personalInfo", verifyToken, personalInfo);
 
 async function generateToken(req,res,next){
   const user = req.user;

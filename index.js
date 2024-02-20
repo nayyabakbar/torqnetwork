@@ -14,6 +14,7 @@ db.mongoConnection();
 
 const userRouter = require("./src/routers/userRouter");
 const marketsRouter = require("./src/routers/marketsRouter.js");
+const kycRouter = require("./src/routers/kycRouter.js");
 
 app.use(session({secret: secretKey, resave: false,saveUninitialized: false}));
   
@@ -24,6 +25,7 @@ app.use(passport.initialize())
 app.use(passport.session()) 
 app.use(userRouter);
 app.use(marketsRouter);
+app.use(kycRouter)
 
 app.use('/badges', express.static(path.join(__dirname, 'public/badges')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/photoUploads')));

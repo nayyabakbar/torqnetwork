@@ -65,9 +65,9 @@ async function signUp(req, res) {
 
       if (!invitationCode == "") {
         const inviter = await User.findOne({ invitationCode: invitationCode });
-        const calculateLevel = (referrals) =>
-            Math.round(Math.cbrt(referrals));
-        const level = calculateLevel(inviter.referrals);
+        const calculateLevel = async (referrals) =>
+            Math.round(Math.cbrt(referrals+1));
+        const level = await calculateLevel(inviter.referrals);
         if (!inviter) {
           return res.status(404).json({
             message: "Invalid Invitation Code!",
@@ -854,6 +854,8 @@ async function toggleNotification(req,res){
   }
 }
 
+
+
 module.exports = {
   login,
   signUp,
@@ -874,7 +876,7 @@ module.exports = {
   getNotifications,
   googleAuth,
   getStakingInfo,
-  toggleNotification
+  toggleNotification, 
 };
 
 
