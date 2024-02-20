@@ -415,7 +415,7 @@ async function bonusWheelReward(req, res) {
       const hourlyEarnings = session.hourlyEarnings.reverse();
       const previousEarning = hourlyEarnings[0].earning;
       hourlyEarnings[0].earning += amount;
-      const percentage = Number(((previousEarning + amount / constants.baseMiningRate) * 100).toFixed(2));
+      const percentage = Number((((previousEarning + amount) / constants.baseMiningRate) * 100).toFixed(2));
       console.log("before calculation", hourlyEarnings[0].percentage);
       console.log(" calculation", percentage);
       hourlyEarnings[0].percentage = percentage;
