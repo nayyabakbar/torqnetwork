@@ -1,7 +1,7 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth2").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
-const AppleStrategy = require("passport-apple").Strategy;
+const TwitterStrategy = require("passport-twitter").Strategy;
 const User = require("../src/models/userSchema");
 const jwt = require("jsonwebtoken");
 const secretKey = require("./secret");
@@ -104,3 +104,66 @@ passport.use(
     }
   )
 );
+
+passport.use(
+  new TwitterStrategy(
+    {
+      clientID: process.env.TWITTER_CLIENT_ID,
+      clientSecret: process.env.TWITTER_CLIENT_SECRET,
+      callbackURL: process.env.TWITTER_CALLBACK_URL,
+      //passReqToCallback: true,
+      //scope:['profile','email']
+    },
+    async function (request, accessToken, refreshToken, profile, done) {
+      try {
+        let user = await User.findOne({ googleId: profile.id });
+        if (user) {
+          console.log("User found:", user);
+        } else {
+          user = await User.findOne({ email: profile.email });
+
+          if (user) {
+            user.googleId = profile.id;
+            await user.save();
+          } else {
+            const newUser = new User({
+              googleId: profile.id,
+              email: profile.email,
+              name: profile.displayName,
+              password: hashSync(profile.displayName, 10),
+            });
+            await newUser.save();
+            const userInvitationCode = crypto.randomBytes(10).toString("hex");
+            const qrCodeDirectory = "public/qrCodes";
+            const imagePath = path.join(
+              qrCodeDirectory,
+              `${newUser._id}_qr.png`
+            );
+            await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
+            const generateCode = await QrCode.toFile(
+              imagePath,
+              userInvitationCode
+            );
+            const savedUser = await User.findByIdAndUpdate(
+              newUser._id,
+              {
+                $set: {
+                  qrCodePath: imagePath,
+                  invitationCode: userInvitationCode,
+                },
+              },
+              { new: true }
+            );
+
+            user = newUser;
+          }
+        }
+
+        return done(null, user);
+      } catch (error) {
+        return done(error);
+      }
+    }
+  )
+);
+

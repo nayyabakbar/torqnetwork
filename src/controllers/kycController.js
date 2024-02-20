@@ -119,4 +119,4 @@ async function uploadSelfie(req, res) {
     }
 }
 
-modules.exports = {personalInfo, uploadPanCardFront, uploadPanCardBack, uploadGovDocFront, uploadGovDocBack, uploadSelfie};
+module.exports = {personalInfo, uploadPanCardFront, uploadPanCardBack, uploadGovDocFront, uploadGovDocBack, uploadSelfie};
