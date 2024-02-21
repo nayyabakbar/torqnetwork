@@ -35,30 +35,30 @@ async function signUp(req, res) {
       const userId = saveUser._id;
 
       //Assign rank
-      const users = await User.aggregate( [
-        {
-           $setWindowFields: {
-              sortBy: { availableBalance: -1 },
-              output: {
-                 rank: {
-                    $denseRank: {}
-                 }
-              }
-           }
-        }
-     ])
-     const rankingUser = users.find(item=> item._id.equals(userId));
-     var newRank = 0;
-     if(rankingUser){
-       newRank = rankingUser.rank;  
-     }      
+    //   const users = await User.aggregate( [
+    //     {
+    //        $setWindowFields: {
+    //           sortBy: { availableBalance: -1 },
+    //           output: {
+    //              rank: {
+    //                 $denseRank: {}
+    //              }
+    //           }
+    //        }
+    //     }
+    //  ])
+    //  const rankingUser = users.find(item=> item._id.equals(userId));
+    //  var newRank = 0;
+    //  if(rankingUser){
+    //    newRank = rankingUser.rank;  
+    //  }      
 
       //Create QR Code For Invitation
       const qrCodeDirectory = "public/qrCodes";
       const imagePath = path.join(qrCodeDirectory, `${userId}_qr.png`);
       await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
       const generateCode = await QrCode.toFile(imagePath, user.invitationCode);
-      await User.findByIdAndUpdate(userId, { $set: { qrCodePath: imagePath, rank: newRank } });
+      await User.findByIdAndUpdate(userId, { $set: { qrCodePath: imagePath } });
 
       //Check for invitation code
       const invitationCode = req.body.invitationCode;
@@ -66,8 +66,10 @@ async function signUp(req, res) {
       if (!invitationCode == "") {
         const inviter = await User.findOne({ invitationCode: invitationCode });
         const calculateLevel = async (referrals) =>
-            Math.round(Math.cbrt(referrals+1));
+            Math.floor(Math.cbrt(referrals+1));
         const level = await calculateLevel(inviter.referrals);
+        console.log("level is", level);
+        
         if (!inviter) {
           return res.status(404).json({
             message: "Invalid Invitation Code!",
@@ -174,7 +176,7 @@ async function getHomeInfo(req, res) {
       isActive: true,
     });
     var currentEarningRate = 0;
-    var coins = 0;
+    //var coins = 0;
     var tier1Bonus = 0;
     var tier2Bonus = 0;
     var bonusWheelBonus = 0;
@@ -195,6 +197,19 @@ async function getHomeInfo(req, res) {
           currentEarningRate = hourlyEarnings[arrayLength - 1].earning;
         }
       }
+      const topUsers = await User.aggregate([
+        {
+          $setWindowFields: {
+            sortBy: { availableBalance: -1 },
+            output: {
+              rank: {
+                $denseRank: {},
+              },
+            },
+          },
+        },
+      ]);
+      const userRank = topUsers.find(item=> item._id.equals(user._id));
       return res.status(200).json({
         streak: user.streak,
         daysOff: user.daysOff,
@@ -204,7 +219,7 @@ async function getHomeInfo(req, res) {
         bonusOfReferral: tier1Bonus + tier2Bonus,
         //  coins: coins,
         bonusWheelBonus: bonusWheelBonus,
-        rank: user.rank,
+        rank: userRank.rank,
         tier1Referrals: user.tier1Referrals.length,
         tier2Referrals: user.tier2Referrals.length,
         hourlyEarnings: hourlyEarnings.reverse(),
@@ -449,7 +464,7 @@ async function getProfile(req, res) {
       const allBadges = badges.filter((badge) => badge.level <= level).reverse();
       return res.status(200).json({
         name: user.name,
-        rank: user.rank,
+        // rank: user.rank,
         level: user.level,
         referrals: user.referrals,
         badges: allBadges,
@@ -768,23 +783,23 @@ async function googleAuth(req, res) {
       });
       await user.save();
         //Assign rank
-     const users = await User.aggregate( [
-      {
-         $setWindowFields: {
-            sortBy: { availableBalance: -1 },
-            output: {
-               rank: {
-                  $denseRank: {}
-               }
-            }
-         }
-      }
-   ])
-   const rankingUser = users.find(item=> item._id.equals(user._id));
-   var newRank = 0;
-   if(rankingUser){
-     newRank = rankingUser.rank;
-   } 
+  //    const users = await User.aggregate( [
+  //     {
+  //        $setWindowFields: {
+  //           sortBy: { availableBalance: -1 },
+  //           output: {
+  //              rank: {
+  //                 $denseRank: {}
+  //              }
+  //           }
+  //        }
+  //     }
+  //  ])
+  //  const rankingUser = users.find(item=> item._id.equals(user._id));
+  //  var newRank = 0;
+  //  if(rankingUser){
+  //    newRank = rankingUser.rank;
+  //  } 
       const userInvitationCode = crypto.randomBytes(10).toString("hex");
       const qrCodeDirectory = "public/qrCodes";
       const imagePath = path.join(qrCodeDirectory, `${user._id}_qr.png`);
@@ -796,7 +811,6 @@ async function googleAuth(req, res) {
           $set: {
             qrCodePath: imagePath,
             invitationCode: userInvitationCode,
-            rank: newRank,
             fcmToken: fcmToken
           },
         },
