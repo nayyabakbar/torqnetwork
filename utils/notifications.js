@@ -27,7 +27,7 @@ async function send(req, res) {
     else{
       notificationMessage = {
         title: "Congratulations!",
-        body: `Your earned ${data} bonus`,
+        body: `Your earned ${data} torq as bonus`,
         };
     }
 
@@ -61,7 +61,7 @@ async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
 
     if (type === "bonus"){
       notificationMessage = {
-        title: `Congratulations! you just earned ${bonus}torq bonus`,
+        title: `Congratulations! you just earned ${bonus}torq as bonus`,
         body: "5 people have joined from your invitation code",
       };
     }

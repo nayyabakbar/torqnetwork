@@ -5,10 +5,11 @@ const User = require("../models/userSchema");
 async function personalInfo(req,res){
     try{
       const kyc = new KYC(req.body);
-      await kyc.save();
+      const newkyc = await kyc.save();
       
       return res.status(200).json({
-        message: "Personal Information saved!"
+        message: "Personal Information saved!",
+        kyc : newkyc
       })
     }
     catch (error) {
