@@ -10,6 +10,7 @@ const path = require('path');
 const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate, getNotifications, googleAuth, getStakingInfo, toggleNotification } = require("../controllers/userController");
 const {startMining, startStaking} = require ("../controllers/miningSessionController");
 const {personalInfo} = require ("../controllers/kycController");
+const {getProgress, followOnTwitter, followOnTelegram} = require ("../controllers/progressController");
 
 const {send} = require("../../utils/notifications");
 
@@ -97,6 +98,11 @@ router.get("/getNotifications",verifyToken, getNotifications);
 router.post("/toggleNotification", verifyToken, toggleNotification);
 
 router.post("/personalInfo", verifyToken, personalInfo);
+
+
+router.get("/getProgress", verifyToken, getProgress);
+router.post("/followOnTwitter", verifyToken, followOnTwitter);
+router.post("/followOnTelegram", verifyToken, followOnTelegram);
 
 async function generateToken(req,res,next){
   const user = req.user;

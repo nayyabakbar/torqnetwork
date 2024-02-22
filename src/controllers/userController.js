@@ -6,6 +6,7 @@ const User = require("../models/userSchema");
 const MiningSession = require("../models/miningSessionSchema");
 const Staking = require("../models/stakingSchema");
 const Notification = require("../models/notificationSchema");
+const Progress = require("../models/progressSchema");
 const constants = require("../constants");
 const crypto = require("crypto");
 const Token = require("../models/tokenSchema");
@@ -17,7 +18,7 @@ const fs = require("fs").promises;
 const path = require("path");
 const cloudinary = require("../../config/cloudinary");
 const { OAuth2Client } = require('google-auth-library');
-const {sendNotificationOnReferral} = require('../../utils/notifications')
+const {sendNotificationOnReferral, sendNotificationOnProgress} = require('../../utils/notifications')
 
 async function signUp(req, res) {
   try {
@@ -31,9 +32,12 @@ async function signUp(req, res) {
       const userInvitationCode = crypto.randomBytes(10).toString("hex");
       user.invitationCode = userInvitationCode;
       user.fcmToken = req.body.fcmToken;
+      const progress = new Progress();
+      await progress.save();
+      user.progress = progress._id
       const saveUser = await user.save();
       const userId = saveUser._id;
-
+      
       //Assign rank
     //   const users = await User.aggregate( [
     //     {
@@ -95,6 +99,9 @@ async function signUp(req, res) {
               sendNotificationOnReferral(primaryInviter._id, saveUser._id);
               if(primaryInviter.referrals === 5){
                 primaryInviter.availableBalance +=  increaseBonus;
+                const progress = await Progress.findById(primaryInviter._id);
+                progress.invitedFriends = true;
+                await progress.save();
                 sendNotificationOnReferral(primaryInviter._id, primaryInviter._id, type = "bonus", bonus = increaseBonus)
               }
               
@@ -358,6 +365,10 @@ async function uploadPhoto(req, res) {
     if (user.photo == ""){
       const bonus = 10 * constants.baseMiningRate;
       user.availableBalance += bonus;
+      const progress = await Progress.findById(user.progress);
+      progress.addedPhoto = true;
+      await progress.save();
+      sendNotificationOnProgress(user._id, user._id, type = "photo", bonus = bonus)
       
     }
     

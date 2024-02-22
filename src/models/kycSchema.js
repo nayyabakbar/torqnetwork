@@ -1,11 +1,6 @@
 const mongoose = require("mongoose");
 
 const kycSchema = mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -36,7 +31,7 @@ const kycSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        default: "pending"
+        default: "pending" //empty if kyc not done, pending if kyc is submitted
     },
     panCardFront: {
         type: String,

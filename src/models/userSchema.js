@@ -99,13 +99,20 @@ const userSchema = mongoose.Schema({
   },
   fcmToken: {
     type: String,
-    default: ""
+    default: "",
   },
   enableNotification: {
     type: Boolean,
-    default: true
+    default: true,
   },
-  
+  kyc: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "KYC",
+  },
+  progress: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Progress",
+  },
 });
 
 // userSchema.pre("remove", async function (next) {
@@ -119,7 +126,7 @@ const userSchema = mongoose.Schema({
 //     { tier2Referrals: deletedUserId },
 //     { $pull: { tier2Referrals: deletedUserId } }
 //   );
-//   await MiningSession.deleteMany({userId: deletedUserId}) 
+//   await MiningSession.deleteMany({userId: deletedUserId})
 //   next();
 // });
 

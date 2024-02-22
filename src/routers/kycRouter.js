@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 
-const {personalInfo, uploadPanCardFront, uploadPanCardBack, uploadGovDocFront, uploadGovDocBack, uploadSelfie} = require ("../controllers/kycController");
+const {personalInfo, uploadPanCardFront, uploadPanCardBack, uploadGovDocFront, uploadGovDocBack, uploadSelfie, getKycStatus} = require ("../controllers/kycController");
 
 
 function verifyToken(req, res, next) {
@@ -52,6 +52,8 @@ router.post('/upload/panCardBack', upload.single('panCardBack'), uploadPanCardBa
 router.post('/upload/govDocFront', upload.single('govDocFront'), uploadGovDocFront);
 router.post('/upload/govDocBack', upload.single('govDocBack'), uploadGovDocBack);
 router.post('/upload/selfie', upload.single('selfie'), uploadSelfie);
+
+router.get('/getKycStatus', verifyToken, getKycStatus);
 
 module.exports = router;
 

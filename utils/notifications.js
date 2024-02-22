@@ -27,7 +27,7 @@ async function send(req, res) {
     else{
       notificationMessage = {
         title: "Congratulations!",
-        body: `Your earned ${data} torq as bonus`,
+        body: `Your earned ${data} torq from bonus wheel`,
         };
     }
 
@@ -61,8 +61,8 @@ async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
 
     if (type === "bonus"){
       notificationMessage = {
-        title: `Congratulations! you just earned ${bonus}torq as bonus`,
-        body: "5 people have joined from your invitation code",
+        title: "You just completed a task to level up",
+        body: `You are rewarded ${bonus} because 5 people have joined from your invitation code`,
       };
     }
     else {
@@ -94,4 +94,58 @@ async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
   }
 }
 
-module.exports = {send, sendNotificationOnReferral}
+async function sendNotificationOnProgress(receiver,sender, type = "", bonus= 0){
+  try {
+    const receivingUser = await User.findById(receiver);
+    const senderUser = await User.findById(sender);
+    const fcmToken = receivingUser.fcmToken;
+    var notificationMessage;
+
+    if (type === "earning"){
+      notificationMessage = {
+        title: "You just completed a task to level up",
+        body: `You are rewarded ${bonus} upon starting your earning on Torqnetwork`,
+      };
+    }
+    else if (type === "photo"){
+      notificationMessage = {
+        title: "You just completed a task to level up",
+        body: `You are rewarded ${bonus} upon adding your photo`,
+      };
+    }
+    else if (type === "twitter"){
+      notificationMessage = {
+        title: "You just completed a task to level up",
+        body: `You are rewarded ${bonus} upon following us on twitter`,
+      };
+    }
+    else if (type === "telegram"){
+      notificationMessage = {
+        title: "You just completed a task to level up",
+        body: `You are rewarded ${bonus} upon following us on telegram`,
+      };
+    }
+    
+
+    const message = {
+      notification: notificationMessage,
+      token: fcmToken,
+    };
+
+    if (receivingUser.enableNotification){
+      const response = await getMessaging().send(message);
+      console.log("Successfully sent message:", response);
+    }
+
+    
+    const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}})
+    await newNotification.save();
+    return;
+
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "Error sending notification" });
+  }
+}
+
+module.exports = {send, sendNotificationOnReferral, sendNotificationOnProgress}

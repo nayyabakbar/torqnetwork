@@ -1,8 +1,10 @@
 const User = require("../models/userSchema");
 const MiningSession = require("../models/miningSessionSchema");
 const Staking = require("../models/stakingSchema");
+const Progress = require("../models/progressSchema");
 const schedule = require("node-schedule");
 const constants = require("../constants");
+const {sendNotificationOnProgress} = require("../../utils/notifications")
 
 async function updateRank(userId){
   try {
@@ -35,7 +37,7 @@ async function updateRank(userId){
 
 async function startMining(req, res) {
   try {
-    const user = await User.findById(req.user.user); //req.user.user contains _id (from payload)
+    const user = await User.findById(req.user.user) //req.user.user contains _id (from payload)
     const currentDate = new Date();
     const lastCheckIn = user.lastCheckIn;
     const sessions = await MiningSession.find({userId: req.user.user});
@@ -44,6 +46,11 @@ async function startMining(req, res) {
       const bonus = 10 * constants.baseMiningRate;
       user.availableBalance += bonus;
       await user.save();
+      const progress = await Progress.findById(user.progress);
+      progress.startedEarning = true;
+      await progress.save();
+      sendNotificationOnProgress(user._id, user._id, type = "earning", bonus = bonus)
+
     }
     const activeSession = await MiningSession.findOne({
       userId: user._id,
