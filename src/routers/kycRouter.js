@@ -4,6 +4,7 @@ const multer = require("multer");
 const fs = require('fs');
 const path = require('path');
 const jwt = require("jsonwebtoken");
+const secretKey = require("../../config/secret");
 
 const {personalInfo, uploadPanCardFront, uploadPanCardBack, uploadGovDocFront, uploadGovDocBack, uploadSelfie, getKycStatus} = require ("../controllers/kycController");
 
