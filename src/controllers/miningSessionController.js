@@ -44,7 +44,7 @@ async function startMining(req, res) {
     
     if(sessions.length === 0){
       const newBonus = 10 * constants.baseMiningRate;
-      user.availableBalance += bonus;
+      user.availableBalance += newBonus;
       await user.save();
       const progress = await Progress.findById(user.progress);
       progress.startedEarning = true;
