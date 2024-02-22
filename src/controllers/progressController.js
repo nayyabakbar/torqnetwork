@@ -28,11 +28,11 @@ async function followOnTwitter(req, res) {
         message: "User not found",
       });
     }
-    const bonus = 10 * constants.baseMiningRate;
+    const newBonus = 10 * constants.baseMiningRate;
     const progress = await Progress.findById(user.progress);
     progress.followedOnTwitter = true;
     await progress.save();
-    sendNotificationOnProgress(user._id, user._id, type = "twitter", bonus = bonus)
+    sendNotificationOnProgress(user._id, user._id, type = "twitter", bonus = newBonus)
     return res.status(200).json({
       progress: user.progress,
     });
@@ -51,11 +51,11 @@ async function followOnTelegram(req, res) {
           message: "User not found",
         });
       }
-      const bonus = 10 * constants.baseMiningRate;
+      const newBonus = 10 * constants.baseMiningRate;
       const progress = await Progress.findById(user.progress);
       progress.followedOnTelegram = true;
       await progress.save();
-      sendNotificationOnProgress(user._id, user._id, type = "telegram", bonus = bonus)
+      sendNotificationOnProgress(user._id, user._id, type = "telegram", bonus = newBonus)
       return res.status(200).json({
         progress: user.progress,
       });
