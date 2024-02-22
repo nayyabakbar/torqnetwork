@@ -371,7 +371,7 @@ async function uploadPhoto(req, res) {
       sendNotificationOnProgress(user._id, user._id, type = "photo", bonus = newBonus)
       
     }
-    
+    console.log("hereee");
     user.photo = req.file.filename;
     await user.save();
 
