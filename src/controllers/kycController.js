@@ -5,6 +5,9 @@ async function personalInfo(req, res) {
   try {
     const kyc = new KYC(req.body);
     const newkyc = await kyc.save();
+    const user = await User.findById(req.user.user);
+    user.kyc = newkyc._id;
+    await user.save();
 
     return res.status(200).json({
       message: "Personal Information saved!",

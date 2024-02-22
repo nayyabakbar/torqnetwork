@@ -46,7 +46,7 @@ const storage =  multer.diskStorage({
 
 const upload = multer({storage: storage, limits: { fileSize: 5 * 1024 * 1024 }})
 
-router.post('/personalInfo', personalInfo)
+router.post('/personalInfo', verifyToken,  personalInfo)
 router.post('/upload/panCardFront', upload.single('panCardFront'), uploadPanCardFront);
 router.post('/upload/panCardBack', upload.single('panCardBack'), uploadPanCardBack);
 router.post('/upload/govDocFront', upload.single('govDocFront'), uploadGovDocFront);
