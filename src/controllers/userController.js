@@ -363,12 +363,12 @@ async function uploadPhoto(req, res) {
     }
 
     if (user.photo == ""){
-      const bonus = 10 * constants.baseMiningRate;
+      const newBonus = 10 * constants.baseMiningRate;
       user.availableBalance += bonus;
       const progress = await Progress.findById(user.progress);
       progress.addedPhoto = true;
       await progress.save();
-      sendNotificationOnProgress(user._id, user._id, type = "photo", bonus = bonus)
+      sendNotificationOnProgress(user._id, user._id, type = "photo", bonus = newBonus)
       
     }
     

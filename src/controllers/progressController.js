@@ -10,7 +10,7 @@ async function getProgress(req, res) {
         message: "User not found",
       });
     }
-    return res.status(200).json({
+     res.status(200).json({
       progress: user.progress,
     });
   } catch (error) {

@@ -43,13 +43,13 @@ async function startMining(req, res) {
     const sessions = await MiningSession.find({userId: req.user.user});
     
     if(sessions.length === 0){
-      const bonus = 10 * constants.baseMiningRate;
+      const newBonus = 10 * constants.baseMiningRate;
       user.availableBalance += bonus;
       await user.save();
       const progress = await Progress.findById(user.progress);
       progress.startedEarning = true;
       await progress.save();
-      sendNotificationOnProgress(user._id, user._id, type = "earning", bonus = bonus)
+      sendNotificationOnProgress(user._id, user._id, type = "earning", bonus = newBonus)
 
     }
     const activeSession = await MiningSession.findOne({
