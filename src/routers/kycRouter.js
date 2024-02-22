@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const fs = require('fs');
 const path = require('path');
-
+const jwt = require("jsonwebtoken");
 
 const {personalInfo, uploadPanCardFront, uploadPanCardBack, uploadGovDocFront, uploadGovDocBack, uploadSelfie, getKycStatus} = require ("../controllers/kycController");
 
