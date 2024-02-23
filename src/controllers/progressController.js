@@ -1,6 +1,7 @@
 const Progress = require("../models/progressSchema");
 const User = require("../models/userSchema");
 const constants = require("../constants");
+const {sendNotificationOnProgress} = require("../../utils/notifications")
 
 async function getProgress(req, res) {
   try {
@@ -23,6 +24,7 @@ async function getProgress(req, res) {
 async function followOnTwitter(req, res) {
   try {
     const user = await User.findById(req.user.user);
+    const username = req.body.username;
     if (!user) {
       return res.status(404).json({
         message: "User not found",
@@ -32,6 +34,9 @@ async function followOnTwitter(req, res) {
     const progress = await Progress.findById(user.progress);
     progress.followedOnTwitter = true;
     await progress.save();
+    user.availableBalance += newBonus;
+    user.twitterUsername = username;
+    await user.save();
     sendNotificationOnProgress(user._id, user._id, type = "twitter", bonus = newBonus)
     return res.status(200).json({
       progress: user.progress,
@@ -46,6 +51,7 @@ async function followOnTwitter(req, res) {
 async function followOnTelegram(req, res) {
     try {
       const user = await User.findById(req.user.user);
+      const username = req.body.username;
       if (!user) {
         return res.status(404).json({
           message: "User not found",
@@ -55,6 +61,9 @@ async function followOnTelegram(req, res) {
       const progress = await Progress.findById(user.progress);
       progress.followedOnTelegram = true;
       await progress.save();
+      user.availableBalance += newBonus;
+      user.telegramUsername = username;
+      await user.save();
       sendNotificationOnProgress(user._id, user._id, type = "telegram", bonus = newBonus)
       return res.status(200).json({
         progress: user.progress,

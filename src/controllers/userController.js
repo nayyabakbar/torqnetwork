@@ -72,7 +72,7 @@ async function signUp(req, res) {
         const calculateLevel = async (referrals) =>
             Math.floor(Math.cbrt(referrals+1));
         const level = await calculateLevel(inviter.referrals);
-        console.log("level is", level);
+        
         
         if (!inviter) {
           return res.status(404).json({
@@ -91,7 +91,7 @@ async function signUp(req, res) {
             }
             if (inviter.inviter) {
               const primaryInviter = await User.findById(inviter.inviter);
-              let primaryLevel = calculateLevel(primaryInviter.referrals + 1);
+              let primaryLevel = await calculateLevel(primaryInviter.referrals + 1);
               primaryInviter.referrals += 1;
               primaryInviter.tier2Referrals.push(saveUser.id);
               primaryInviter.level = primaryLevel;

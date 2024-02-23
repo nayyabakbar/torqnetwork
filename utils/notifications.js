@@ -27,7 +27,7 @@ async function send(req, res) {
     else{
       notificationMessage = {
         title: "Congratulations!",
-        body: `Your earned ${data} torq from bonus wheel`,
+        body: `Your mining rate increased by ${data}% torq from spinning bonus wheel`,
         };
     }
 
@@ -90,7 +90,7 @@ async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
 
   } catch (error) {
     console.error("Error sending message:", error);
-    res.status(500).json({ error: "Error sending notification" });
+    
   }
 }
 
@@ -144,7 +144,7 @@ async function sendNotificationOnProgress(receiver,sender, type = "", bonus= 0){
 
   } catch (error) {
     console.error("Error sending message:", error);
-    res.status(500).json({ error: "Error sending notification" });
+    
   }
 }
 

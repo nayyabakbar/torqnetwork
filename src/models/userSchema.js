@@ -113,6 +113,14 @@ const userSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Progress",
   },
+  twitterUsername:{
+    type : String,
+    default: ""
+  },
+  telegramUsername:{
+    type : String,
+    default: ""
+  }
 });
 
 // userSchema.pre("remove", async function (next) {
