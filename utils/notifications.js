@@ -62,7 +62,7 @@ async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
     if (type === "bonus"){
       notificationMessage = {
         title: "You just completed a task to level up",
-        body: `You are rewarded ${bonus} because 5 people have joined from your invitation code`,
+        body: `You are rewarded ${bonus} torq because 5 people have joined from your invitation code`,
       };
     }
     else {
@@ -104,25 +104,25 @@ async function sendNotificationOnProgress(receiver,sender, type = "", bonus= 0){
     if (type === "earning"){
       notificationMessage = {
         title: "You just completed a task to level up",
-        body: `You are rewarded ${bonus} upon starting your earning on Torqnetwork`,
+        body: `You are rewarded ${bonus} torq upon starting your earning on Torqnetwork`,
       };
     }
     else if (type === "photo"){
       notificationMessage = {
         title: "You just completed a task to level up",
-        body: `You are rewarded ${bonus} upon adding your photo`,
+        body: `You are rewarded ${bonus} torq upon adding your photo`,
       };
     }
     else if (type === "twitter"){
       notificationMessage = {
         title: "You just completed a task to level up",
-        body: `You are rewarded ${bonus} upon following us on twitter`,
+        body: `You are rewarded ${bonus} torq upon following us on twitter`,
       };
     }
     else if (type === "telegram"){
       notificationMessage = {
         title: "You just completed a task to level up",
-        body: `You are rewarded ${bonus} upon following us on telegram`,
+        body: `You are rewarded ${bonus} torq upon following us on telegram`,
       };
     }
     

@@ -101,7 +101,11 @@ const userSchema = mongoose.Schema({
     type: String,
     default: "",
   },
-  enableNotification: {
+  enableNotification: { //push notifications
+    type: Boolean,
+    default: true,
+  },
+  enableEmailNotification: {
     type: Boolean,
     default: true,
   },

@@ -28,6 +28,7 @@ async function signUp(req, res) {
         name: req.body.name,
         email: req.body.email,
         password: hashSync(req.body.password, 10),
+        enableNotification: req.body.enableNotification
       });
       const userInvitationCode = crypto.randomBytes(10).toString("hex");
       user.invitationCode = userInvitationCode;
@@ -879,6 +880,26 @@ async function toggleNotification(req,res){
   }
 }
 
+async function toggleEmailNotification(req,res){
+  try{
+    const user = await User.findById(req.user.user);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    user.enableEmailNotification = !user.enableEmailNotification;
+    await user.save();
+    return res.status(200).json({
+      message: "Notification toggled successfully"
+    })
+  }
+  catch (error) {
+    console.log(error)
+    res.status(500).json({
+      message: "An error occured!", error
+    });
+  }
+}
+
 
 
 module.exports = {
@@ -902,6 +923,7 @@ module.exports = {
   googleAuth,
   getStakingInfo,
   toggleNotification, 
+  toggleEmailNotification
 };
 
 
