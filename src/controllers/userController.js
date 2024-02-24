@@ -217,6 +217,7 @@ async function getHomeInfo(req, res) {
           },
         },
       ]);
+      console.log(topUsers);
       const userRank = topUsers.find(item=> item._id.equals(user._id));
       return res.status(200).json({
         streak: user.streak,
@@ -582,6 +583,7 @@ async function getStats(req, res) {
         },
       },
     ]);
+    console.log(topUsers);
     return res.status(200).json({
       onlineUsers: onlineUsers,
       totalUsers: totalUsers,
