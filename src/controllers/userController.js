@@ -205,19 +205,19 @@ async function getHomeInfo(req, res) {
           currentEarningRate = hourlyEarnings[arrayLength - 1].earning;
         }
       }
-      const topUsers = await User.aggregate([
-        {
-          $setWindowFields: {
-            sortBy: { availableBalance: -1 },
-            output: {
-              rank: {
-                $denseRank: {},
-              },
-            },
-          },
-        },
-      ]);
-      const userRank = topUsers.find(item=> item._id.equals(user._id));
+      // const topUsers = await User.aggregate([
+      //   {
+      //     $setWindowFields: {
+      //       sortBy: { availableBalance: -1 },
+      //       output: {
+      //         rank: {
+      //           $denseRank: {},
+      //         },
+      //       },
+      //     },
+      //   },
+      // ]);
+      // const userRank = topUsers.find(item=> item._id.equals(user._id));
       return res.status(200).json({
         streak: user.streak,
         daysOff: user.daysOff,
@@ -227,7 +227,7 @@ async function getHomeInfo(req, res) {
         bonusOfReferral: tier1Bonus + tier2Bonus,
         //  coins: coins,
         bonusWheelBonus: bonusWheelBonus,
-        rank: userRank.rank,
+        rank: user.rank,
         tier1Referrals: user.tier1Referrals.length,
         tier2Referrals: user.tier2Referrals.length,
         hourlyEarnings: hourlyEarnings.reverse(),
@@ -572,16 +572,26 @@ async function getStats(req, res) {
     const totalUsers = await User.countDocuments({});
     const topUsers = await User.aggregate([
       {
-        $setWindowFields: {
-          sortBy: { availableBalance: -1 },
-          output: {
-            rank: {
-              $denseRank: {},
-            },
-          },
-        },
+        $sort: { availableBalance: -1 } // Sort users by available balance
       },
+      {
+        $set: {
+          rank: { $denseRank: {} } // Calculate rank for each user
+        }
+      }
     ]);
+    // const topUsers = await User.aggregate([
+    //   {
+    //     $setWindowFields: {
+    //       sortBy: { availableBalance: -1 },
+    //       output: {
+    //         rank: {
+    //           $denseRank: {},
+    //         },
+    //       },
+    //     },
+    //   },
+    // ]);
     return res.status(200).json({
       onlineUsers: onlineUsers,
       totalUsers: totalUsers,
@@ -792,6 +802,7 @@ async function googleAuth(req, res) {
         email,
         name,
         password: email,
+        enableNotification: req.body.enableNotification
       });
       await user.save();
         //Assign rank
