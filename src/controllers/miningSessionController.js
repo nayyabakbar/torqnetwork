@@ -222,7 +222,9 @@ const inactivityCheckJob = schedule.scheduleJob(' * * * * *', async function() {
 
     
     const inactiveUsers = await User.find({
-      lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
+      //lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
+      
+      lastCheckIn: { $lt: new Date(new Date() - 26 * 60 * 1000) }
     });
     for (const user of inactiveUsers) {
         const daysOffAvailable = user.daysOff;
