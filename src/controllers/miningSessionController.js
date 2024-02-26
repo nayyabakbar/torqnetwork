@@ -113,8 +113,8 @@ function processHourlyEarnings(userId, sessionId) {
   const endTime2 = new Date(endTime.getTime() + 1 * 60 * 1000);
   //const minute = startTime.getMinutes();
   //const cronJobRule = `${minute} * * * *`;
-  const second = startTime.getSeconds();
-  const cronJobRule = `${second} * * * *`;
+  
+  const cronJobRule = "* * * * *";
   getHourlyEarnings(userId, sessionId);
 
   const job = schedule.scheduleJob(endTime2, async function () {
