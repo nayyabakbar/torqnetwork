@@ -69,13 +69,19 @@ async function startMining(req, res) {
       user.miningSessions.push(newSession);
       await user.save();
       const timePassed = currentDate - lastCheckIn;
-      if (!lastCheckIn || timePassed <= 25 * 60 * 60 * 1000) {
+
+      //if (!lastCheckIn || timePassed <= 25 * 60 * 60 * 1000) {
+
+      if (!lastCheckIn || timePassed <= 26 * 60 * 1000) {  
         user.streak += 1;
         if (user.streak % 6 === 0) {
           user.daysOff += 1; // Increment the user's daysOff by 1
         }
       }
-      if (timePassed > 25 * 60 * 60 * 1000) {
+
+      //if (timePassed > 25 * 60 * 60 * 1000) {
+      
+      if (timePassed > 26 * 60 * 1000) {
         user.streak = 0;
       }
       await user.save();
@@ -101,10 +107,14 @@ async function startMining(req, res) {
 
 function processHourlyEarnings(userId, sessionId) {
   const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + 23 * 60 * 60 * 1000);
+  // const endTime = new Date(startTime.getTime() + 23 * 60 * 60 * 1000);
+
+  const endTime = new Date(startTime.getTime() +  24 * 60 * 1000);
   const endTime2 = new Date(endTime.getTime() + 1 * 60 * 1000);
   const minute = startTime.getMinutes();
-  const cronJobRule = `${minute} * * * *`;
+  //const cronJobRule = `${minute} * * * *`;
+  
+  const cronJobRule = "* * * * *";
   getHourlyEarnings(userId, sessionId);
 
   const job = schedule.scheduleJob(endTime2, async function () {
@@ -207,7 +217,7 @@ async function getActiveTiers(userId, referralType) {
   }
 }
 
-const inactivityCheckJob = schedule.scheduleJob(' 0 * * * *', async function() { //All users that have been inactive since 25 hours
+const inactivityCheckJob = schedule.scheduleJob(' * * * * *', async function() { //All users that have been inactive since 25 hours
   try {
 
     
@@ -250,7 +260,9 @@ inactivityCheckJob.invoke();
 
 schedule.scheduleJob('0 0 * * *', async function () { //All users that have been inactive since 30 days
   try {
-    const users = await User.find({ lastCheckIn: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } });
+    //const users = await User.find({ lastCheckIn: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } });
+    
+    const users = await User.find({ lastCheckIn: { $lt: new Date(Date.now() - 12 * 60 * 60 * 1000) } });
     const promises = users.map(async(user)=>{
     user.availableBalance = 0;
     user.stakingBalance = 0;

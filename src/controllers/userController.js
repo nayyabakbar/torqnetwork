@@ -11,7 +11,6 @@ const constants = require("../constants");
 const crypto = require("crypto");
 const Token = require("../models/tokenSchema");
 const sendEmail = require("../../utils/sendEmail");
-const schedule = require("node-schedule");
 const badges = require("../badges");
 const QrCode = require("qrcode");
 const fs = require("fs").promises;
