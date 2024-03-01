@@ -151,20 +151,20 @@ async function getHourlyEarnings(userId, sessionId) {
     "T2"
   );
 
-  const user = await User.findById(referralId);
-  const inviterId = user.inviter;
-  const inviter = await User.findById(inviterId);
-  let inviterBonus = 0;
-  if (inviter) {
-    const activeSession = await MiningSession.findOne({
-      userId: inviter._id,
-      isActive: true,
-    });
-    if (activeSession) {
-      inviterBonus =
-        constants.tier1ReferralBonusPercentage * constants.baseMiningRate;
-    }
-  }
+  //const user = await User.findById(referralId);
+  // const inviterId = user.inviter;
+  // const inviter = await User.findById(inviterId);
+  // let inviterBonus = 0;
+  // if (inviter) {
+  //   const activeSession = await MiningSession.findOne({
+  //     userId: inviter._id,
+  //     isActive: true,
+  //   });
+  //   if (activeSession) {
+  //     inviterBonus =
+  //       constants.tier1ReferralBonusPercentage * constants.baseMiningRate;
+  //   }
+  // }
 
   console.log("tier 1 count", tier1Count);
   console.log("tier 2 count", tier2Count);
@@ -182,14 +182,14 @@ async function getHourlyEarnings(userId, sessionId) {
         (constants.tier2ReferralBonusPercentage * constants.baseMiningRate) +
       bonusPercentage * constants.baseMiningRate +
       constants.baseMiningRate * (tier1Bonus / 100) +
-      constants.baseMiningRate * (tier2Bonus / 100) +
-      inviterBonus);
+      constants.baseMiningRate * (tier2Bonus / 100));
 
-  //const user = await User.findById(userId);
+  const user = await User.findById(userId);
   const availableBalance = user.availableBalance;
   user.availableBalance = Number(
     (availableBalance + hourlyMiningRate).toFixed(2)
   );
+  user.availableBurningBalance = user.availableBalance;
   await user.save();
   const updateUserRank = await updateRank(userId);
 
@@ -238,9 +238,7 @@ async function getActiveTiers(userId, referralType) {
   }
 }
 
-const inactivityCheckJob = schedule.scheduleJob(
-  " * * * * *",
-  async function () {
+const inactivityCheckJob = schedule.scheduleJob(" * * * * *", async function () {
     //All users that have been inactive since 25 hours
     try {
       const inactiveUsers = await User.find({
@@ -263,9 +261,10 @@ const inactivityCheckJob = schedule.scheduleJob(
           await user.save();
           processHourlyEarnings(user._id, newSession._id);
         } else {
-          const availableBalance = user.availableBalance;
-          const burningRate = (4 / 2400) * availableBalance;
-          const newBalance = (availableBalance - burningRate).toFixed(2);
+          const balanceBeforeBurning = user.availableBurningBalance;
+          const burningRate = (4 / 2400) * balanceBeforeBurning;
+          const currentBalance = user.availableBalance;
+          const newBalance = (currentBalance - burningRate).toFixed(2);
           user.availableBalance = Number(newBalance);
           await user.save();
           const updateUserRank = updateRank(user._Id);

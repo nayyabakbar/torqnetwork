@@ -81,6 +81,7 @@ async function signUp(req, res) {
         } else {
           try {
             saveUser.inviter = inviter._id;
+            saveUser.tier1Referrals.push(inviter._id)
             inviter.tier1Referrals.push(saveUser._id);
             inviter.referrals += 1;
             inviter.level = level;

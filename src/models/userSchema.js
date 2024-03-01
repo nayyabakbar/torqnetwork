@@ -26,6 +26,10 @@ const userSchema = mongoose.Schema({
     type: Number,
     default: 0,
   },
+  availableBurningBalance: {
+    type: Number,
+    default: 0,
+  },
   lastCheckIn: {
     type: Date,
     index: true,
