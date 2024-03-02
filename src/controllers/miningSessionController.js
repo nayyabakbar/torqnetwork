@@ -268,7 +268,8 @@ const inactivityCheckJob = schedule.scheduleJob(" * * * * *", async function () 
             const newBalance = (currentBalance - burningRate).toFixed(2);
             user.availableBalance = Number(newBalance);
             const burning = new Burning({
-              amount: burningRate
+              createdAt: new Date(),
+              amount: Number(burningRate.toFixed(2))
             });
 
             const savedBurning = await burning.save();

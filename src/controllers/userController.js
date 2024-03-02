@@ -70,8 +70,10 @@ async function signUp(req, res) {
       if (!invitationCode == "") {
         const inviter = await User.findOne({ invitationCode: invitationCode });
         const calculateLevel = async (referrals) =>
-            Math.floor(Math.cbrt(referrals));
+            Math.floor(Math.cbrt(referrals + 1));
        
+        const inviterLevel = await calculateLevel(inviter.referrals)
+
         if (!inviter) {
           return res.status(404).json({
             message: "Invalid Invitation Code!",
@@ -82,11 +84,11 @@ async function signUp(req, res) {
             saveUser.tier1Referrals.push(inviter._id)
             inviter.tier1Referrals.push(saveUser._id);
             inviter.referrals += 1;
-            inviter.level = await calculateLevel(inviter.referrals);
+            inviter.level = inviterLevel
             const increaseBonus = 10 * constants.baseMiningRate;
             sendNotificationOnReferral(inviter._id, saveUser._id);
 
-            if(inviter.referrals === 5){
+            if(inviter.referrals + 1 === 5){
               inviter.availableBalance +=  increaseBonus;
               const progress = await Progress.findById(inviter._id);
               progress.invitedFriends = true;
@@ -113,7 +115,6 @@ async function signUp(req, res) {
             }
             await saveUser.save();
             await inviter.save();
-            sendNotificationOnReferral(inviter._id, saveUser._id)
           } catch (error) {
             console.log(error);
           }
@@ -902,7 +903,10 @@ async function toggleEmailNotification(req,res){
 
 async function getUserBurningCards(req,res){
   try{
-    const user = await User.findById(req.user.user).populate("burnings");
+    const user = await User.findById(req.user.user).populate({
+      path: "burnings",
+      options: {sort: {createdAt: -1}}
+    })
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
