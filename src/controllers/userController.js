@@ -32,25 +32,12 @@ async function signUp(req, res) {
       const userInvitationCode = crypto.randomBytes(10).toString("hex");
       user.invitationCode = userInvitationCode;
       user.fcmToken = req.body.fcmToken;
-      const progress = new Progress();
-      await progress.save();
-      user.progress = progress._id
-
-
-      //Create QR Code For Invitation
-      const qrCodeDirectory = "public/qrCodes";
-      const imagePath = path.join(qrCodeDirectory, `${userId}_qr.png`);
-      await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
-      const generateCode = await QrCode.toFile(imagePath, user.invitationCode);
-
+      
       const invitationCode = req.body.invitationCode;
+
       let saveUser;
-      if (invitationCode !== "") {
-        const inviter = await User.findOne({ invitationCode: invitationCode });
-        const calculateLevel = async (referrals) =>
-            Math.floor(Math.cbrt(referrals + 1));
-       
-        const inviterLevel = await calculateLevel(inviter.referrals)
+      if (!invitationCode == "") {
+        const inviter = await User.findOne({ invitationCode: invitationCode })
 
         if (!inviter) {
           return res.status(404).json({
@@ -58,19 +45,28 @@ async function signUp(req, res) {
           });
         } else {
              saveUser = await user.save();
+             const calculateLevel = async (referrals) =>
+            Math.floor(Math.cbrt(referrals + 1));
+       
+          const inviterLevel = await calculateLevel(inviter.referrals)
+          const progress = new Progress();
+          await progress.save();
+          saveUser.progress = progress._id;
+
           try {
             saveUser.inviter = inviter._id;
             saveUser.tier1Referrals.push(inviter._id)
             inviter.tier1Referrals.push(saveUser._id);
             inviter.referrals += 1;
+            saveUser.referrals += 1;
             inviter.level = inviterLevel
             const increaseBonus = 10 * constants.baseMiningRate;
             sendNotificationOnReferral(inviter._id, saveUser._id);
 
-            if(inviter.referrals + 1 === 5){
+            if(inviter.referrals === 5){
               inviter.availableBalance +=  increaseBonus;
-              const progress = await Progress.findById(inviter._id);
-              progress.invitedFriends = true;
+              const progress = await Progress.findById(inviter.progress);
+              inviter.progress.invitedFriends = true;
               await progress.save();
               sendNotificationOnReferral(inviter._id, inviter._id, type = "bonus", bonus = increaseBonus)
             }
@@ -85,7 +81,7 @@ async function signUp(req, res) {
 
               if(primaryInviter.referrals === 5){
                 primaryInviter.availableBalance +=  increaseBonus;
-                const progress = await Progress.findById(primaryInviter._id);
+                const progress = await Progress.findById(primaryInviter.progress);
                 progress.invitedFriends = true;
                 await progress.save();
                 sendNotificationOnReferral(primaryInviter._id, primaryInviter._id, type = "bonus", bonus = increaseBonus)
@@ -101,6 +97,9 @@ async function signUp(req, res) {
       }
 
       else {
+         const progress = new Progress();
+         await progress.save();
+         user.progress = progress._id;
          saveUser = await user.save();
       }
       
@@ -123,20 +122,28 @@ async function signUp(req, res) {
     //    newRank = rankingUser.rank;  
     //  }      
 
-
-     await User.findByIdAndUpdate(saveUser._id, { $set: { qrCodePath: imagePath } });
-
+      //Create QR Code For Invitation
+      const qrCodeDirectory = "public/qrCodes";
+      const imagePath = path.join(qrCodeDirectory, `${saveUser._id}_qr.png`);
+      await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
+      const generateCode = await QrCode.toFile(imagePath, user.invitationCode);
+      await User.findByIdAndUpdate(saveUser._id, { $set: { qrCodePath: imagePath } });
+      
+      
       return res.status(200).json({
         message: "Signed up successfully",
         user: saveUser,
       });
     }
+
     res.status(409).json({
       message: "User with this email already exists",
     });
+
   } catch (error) {
+    console.log(error)
     res.status(500).json({
-      message: "An error occured!",
+      message: "An error occured!", error
     });
   }
 }
@@ -383,7 +390,6 @@ async function uploadPhoto(req, res) {
       sendNotificationOnProgress(user._id, user._id, type = "photo", bonus = newBonus)
       
     }
-    console.log("hereee");
     user.photo = req.file.filename;
     await user.save();
 
@@ -929,6 +935,7 @@ async function getUserBurningCards(req,res){
 }
 
 
+
 module.exports = {
   login,
   signUp,
@@ -951,7 +958,7 @@ module.exports = {
   getStakingInfo,
   toggleNotification, 
   toggleEmailNotification,
-  getUserBurningCards
+  getUserBurningCards,
 };
 
 
