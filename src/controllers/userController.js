@@ -35,39 +35,17 @@ async function signUp(req, res) {
       const progress = new Progress();
       await progress.save();
       user.progress = progress._id
-      const saveUser = await user.save();
-      const userId = saveUser._id;
-      
-      //Assign rank
-    //   const users = await User.aggregate( [
-    //     {
-    //        $setWindowFields: {
-    //           sortBy: { availableBalance: -1 },
-    //           output: {
-    //              rank: {
-    //                 $denseRank: {}
-    //              }
-    //           }
-    //        }
-    //     }
-    //  ])
-    //  const rankingUser = users.find(item=> item._id.equals(userId));
-    //  var newRank = 0;
-    //  if(rankingUser){
-    //    newRank = rankingUser.rank;  
-    //  }      
+
 
       //Create QR Code For Invitation
       const qrCodeDirectory = "public/qrCodes";
       const imagePath = path.join(qrCodeDirectory, `${userId}_qr.png`);
       await fs.mkdir(path.join(qrCodeDirectory), { recursive: true });
       const generateCode = await QrCode.toFile(imagePath, user.invitationCode);
-      await User.findByIdAndUpdate(userId, { $set: { qrCodePath: imagePath } });
 
-      //Check for invitation code
       const invitationCode = req.body.invitationCode;
-
-      if (!invitationCode == "") {
+      let saveUser;
+      if (invitationCode !== "") {
         const inviter = await User.findOne({ invitationCode: invitationCode });
         const calculateLevel = async (referrals) =>
             Math.floor(Math.cbrt(referrals + 1));
@@ -79,6 +57,7 @@ async function signUp(req, res) {
             message: "Invalid Invitation Code!",
           });
         } else {
+             saveUser = await user.save();
           try {
             saveUser.inviter = inviter._id;
             saveUser.tier1Referrals.push(inviter._id)
@@ -120,6 +99,32 @@ async function signUp(req, res) {
           }
         }
       }
+
+      else {
+         saveUser = await user.save();
+      }
+      
+      //Assign rank
+    //   const users = await User.aggregate( [
+    //     {
+    //        $setWindowFields: {
+    //           sortBy: { availableBalance: -1 },
+    //           output: {
+    //              rank: {
+    //                 $denseRank: {}
+    //              }
+    //           }
+    //        }
+    //     }
+    //  ])
+    //  const rankingUser = users.find(item=> item._id.equals(userId));
+    //  var newRank = 0;
+    //  if(rankingUser){
+    //    newRank = rankingUser.rank;  
+    //  }      
+
+
+     await User.findByIdAndUpdate(saveUser._id, { $set: { qrCodePath: imagePath } });
 
       return res.status(200).json({
         message: "Signed up successfully",
