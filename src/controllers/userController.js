@@ -66,7 +66,7 @@ async function signUp(req, res) {
             if(inviter.referrals === 5){
               inviter.availableBalance +=  increaseBonus;
               const progress = await Progress.findById(inviter.progress);
-              inviter.progress.invitedFriends = true;
+              progress.invitedFriends = true;
               await progress.save();
               sendNotificationOnReferral(inviter._id, inviter._id, type = "bonus", bonus = increaseBonus)
             }
