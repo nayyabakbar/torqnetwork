@@ -7,7 +7,7 @@ async function fetchMarketsData(){
     const url = process.env.LCW_COINS_URI;
     const apiKey = process.env.LCW_COINS_API;
     const bodyObject = {
-      codes: ["BTC", "ETH","BNB", "SOL","XRP","ADA","DOGE","AVAX","TRX","LINK","DOT","TON","MATIC","SHIB","DAI","LTC","ICP","BCH", "UNI","ATOM"],
+      codes: ["BTC", "ETH","BNB", "SOL","XRP","ADA","DOGE","AVAX","TRX","LINK","DOT","OP","MATIC","SHIB","DAI","LTC","ICP","BCH", "UNI","ATOM"],
       currency: "USD",
       sort: "rank",
       order: "ascending",

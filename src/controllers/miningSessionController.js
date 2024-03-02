@@ -2,6 +2,7 @@ const User = require("../models/userSchema");
 const MiningSession = require("../models/miningSessionSchema");
 const Staking = require("../models/stakingSchema");
 const Progress = require("../models/progressSchema");
+const Burning = require("../models/burningSchema");
 const schedule = require("node-schedule");
 const constants = require("../constants");
 const { sendNotificationOnProgress } = require("../../utils/notifications");
@@ -238,8 +239,7 @@ async function getActiveTiers(userId, referralType) {
   }
 }
 
-const inactivityCheckJob = schedule.scheduleJob(" * * * * *", async function () {
-    //All users that have been inactive since 25 hours
+const inactivityCheckJob = schedule.scheduleJob(" * * * * *", async function () { //All users that have been inactive since 25 hours
     try {
       const inactiveUsers = await User.find({
         //lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
@@ -261,13 +261,21 @@ const inactivityCheckJob = schedule.scheduleJob(" * * * * *", async function () 
           await user.save();
           processHourlyEarnings(user._id, newSession._id);
         } else {
-          const balanceBeforeBurning = user.availableBurningBalance;
-          const burningRate = (4 / 2400) * balanceBeforeBurning;
           const currentBalance = user.availableBalance;
-          const newBalance = (currentBalance - burningRate).toFixed(2);
-          user.availableBalance = Number(newBalance);
-          await user.save();
-          const updateUserRank = updateRank(user._Id);
+          if(currentBalance > 0){
+            const balanceBeforeBurning = user.availableBurningBalance;
+            const burningRate = (4 / 2400) * balanceBeforeBurning;
+            const newBalance = (currentBalance - burningRate).toFixed(2);
+            user.availableBalance = Number(newBalance);
+            const burning = new Burning({
+              amount: burningRate
+            });
+
+            const savedBurning = await burning.save();
+            user.burnings.push(savedBurning);
+            await user.save();
+            const updateUserRank = updateRank(user._Id); 
+          }
         }
       }
     } catch (error) {

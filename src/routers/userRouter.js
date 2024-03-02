@@ -7,7 +7,7 @@ const multer = require("multer");
 const fs = require('fs');
 const path = require('path');
 
-const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate, getNotifications, googleAuth, getStakingInfo, toggleNotification, toggleEmailNotification } = require("../controllers/userController");
+const { login, signUp, getHomeInfo, requestResetPassword, resetPassword,checkEligibilyForBonusWheel, bonusWheelReward, getProfile, activeTiers, earningCalculator, getStats, uploadPhoto, deleteAccount, getInfo, balanceHistory, balanceHistoryOfSpecificDate, getNotifications, googleAuth, getStakingInfo, toggleNotification, toggleEmailNotification, getUserBurningCards } = require("../controllers/userController");
 const {startMining, startStaking} = require ("../controllers/miningSessionController");
 const {personalInfo} = require ("../controllers/kycController");
 const {getProgress, followOnTwitter, followOnTelegram} = require ("../controllers/progressController");
@@ -92,6 +92,7 @@ router.get("/balanceHistory", verifyToken, balanceHistory);
 router.post("/balanceHistoryOfSpecificDate", verifyToken, balanceHistoryOfSpecificDate)
 
 router.get("/getStakingInfo", verifyToken, getStakingInfo);
+router.get("/getUserBurningCards", verifyToken, getUserBurningCards);
 
 router.post("/sendNotification", verifyToken, send);
 router.get("/getNotifications",verifyToken, getNotifications);

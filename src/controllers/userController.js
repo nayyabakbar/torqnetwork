@@ -70,10 +70,8 @@ async function signUp(req, res) {
       if (!invitationCode == "") {
         const inviter = await User.findOne({ invitationCode: invitationCode });
         const calculateLevel = async (referrals) =>
-            Math.floor(Math.cbrt(referrals+1));
-        const level = await calculateLevel(inviter.referrals);
-        
-        
+            Math.floor(Math.cbrt(referrals));
+       
         if (!inviter) {
           return res.status(404).json({
             message: "Invalid Invitation Code!",
@@ -84,10 +82,15 @@ async function signUp(req, res) {
             saveUser.tier1Referrals.push(inviter._id)
             inviter.tier1Referrals.push(saveUser._id);
             inviter.referrals += 1;
-            inviter.level = level;
+            inviter.level = await calculateLevel(inviter.referrals);
             const increaseBonus = 10 * constants.baseMiningRate;
+            sendNotificationOnReferral(inviter._id, saveUser._id);
+
             if(inviter.referrals === 5){
               inviter.availableBalance +=  increaseBonus;
+              const progress = await Progress.findById(inviter._id);
+              progress.invitedFriends = true;
+              await progress.save();
               sendNotificationOnReferral(inviter._id, inviter._id, type = "bonus", bonus = increaseBonus)
             }
             if (inviter.inviter) {
@@ -98,6 +101,7 @@ async function signUp(req, res) {
               primaryInviter.level = primaryLevel;
               await primaryInviter.save();
               sendNotificationOnReferral(primaryInviter._id, saveUser._id);
+
               if(primaryInviter.referrals === 5){
                 primaryInviter.availableBalance +=  increaseBonus;
                 const progress = await Progress.findById(primaryInviter._id);
@@ -640,19 +644,12 @@ async function getInfo(req, res) {
       (timeRemaining % (60 * 60 * 1000)) / (60 * 1000)
     );
 
-    let stakingPeriod;
-    const staking = await Staking.findOne({ userId: user._id, isActive: true })
-      .sort({ years: 1 })
-      .limit(1);
-    if (staking) {
-      stakingPeriod = staking.years;
-    } else {
-      stakingPeriod = 0;
-    }
+    const stakings = await Staking.countDocuments({userId: user._id, isActive: true});
+   
     res.status(200).json({
       timeRemaining: `${hoursRemaining}h ${minutesRemaining}m`,
       stakedBalance: stakedBalance,
-      stakedPeriod: stakingPeriod,
+      stakings: stakings,
     });
   } catch (error) {
     res.status(500).json({
@@ -903,6 +900,24 @@ async function toggleEmailNotification(req,res){
   }
 }
 
+async function getUserBurningCards(req,res){
+  try{
+    const user = await User.findById(req.user.user).populate("burnings");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    return res.status(200).json({
+      burningCards: user.burnings
+    })
+  }
+  catch (error) {
+    console.log(error)
+    res.status(500).json({
+      message: "An error occured!", error
+    });
+  }
+}
 
 
 module.exports = {
@@ -926,7 +941,8 @@ module.exports = {
   googleAuth,
   getStakingInfo,
   toggleNotification, 
-  toggleEmailNotification
+  toggleEmailNotification,
+  getUserBurningCards
 };
 
 

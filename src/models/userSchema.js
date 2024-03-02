@@ -128,7 +128,13 @@ const userSchema = mongoose.Schema({
   telegramUsername:{
     type : String,
     default: ""
-  }
+  },
+  burnings: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Burning"
+    }
+  ]
 });
 
 // userSchema.pre("remove", async function (next) {
