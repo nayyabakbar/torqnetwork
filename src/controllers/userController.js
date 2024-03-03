@@ -63,6 +63,9 @@ async function signUp(req, res) {
             const increaseBonus = 10 * constants.baseMiningRate;
             sendNotificationOnReferral(inviter._id, saveUser._id);
 
+            const allBadges = badges.filter((badge) => badge.level <= inviterLevel).reverse();
+            inviter.badges = allBadges;
+
             if(inviter.referrals === 5){
               inviter.availableBalance +=  increaseBonus;
               const progress = await Progress.findById(inviter.progress);
@@ -76,6 +79,10 @@ async function signUp(req, res) {
               primaryInviter.referrals += 1;
               primaryInviter.tier2Referrals.push(saveUser.id);
               primaryInviter.level = primaryLevel;
+
+              const allBadges = badges.filter((badge) => badge.level <= primaryLevel).reverse();
+              primaryInviter.badges = allBadges;
+
               await primaryInviter.save();
               sendNotificationOnReferral(primaryInviter._id, saveUser._id);
 
@@ -192,8 +199,6 @@ async function login(req, res) {
 }
 
 async function getHomeInfo(req, res) {
-  console.log("here");
-  //console.log("here", "token: ", req.info.token, "userrrr:", req.user);
   try {
     const user = await User.findById(req.user.user); //req.user.user contains _id (from payload)
     const session = await MiningSession.findOne({
@@ -234,7 +239,7 @@ async function getHomeInfo(req, res) {
           },
         },
       ]);
-      console.log(topUsers);
+   
       const userRank = topUsers.find(item=> item._id.equals(user._id));
       return res.status(200).json({
         streak: user.streak,
@@ -453,18 +458,14 @@ async function bonusWheelReward(req, res) {
       isActive: true,
     });
     if (session && session.bonusWheel === 0) {
-      console.log("amount", rewardAmount);
       session.bonusWheel = rewardAmount;
       const amount = (rewardAmount/100)* constants.baseMiningRate;
       const hourlyEarnings = session.hourlyEarnings.reverse();
       const previousEarning = hourlyEarnings[0].earning;
       hourlyEarnings[0].earning += amount;
       const percentage = Number((((previousEarning + amount) / constants.baseMiningRate) * 100).toFixed(2));
-      console.log("before calculation", hourlyEarnings[0].percentage);
-      console.log(" calculation", percentage);
       hourlyEarnings[0].percentage = percentage;
-      console.log("after calculation", hourlyEarnings[0].percentage);
-
+  
       const user = await User.findById(req.user.user);
       const availableBalance = user.availableBalance
       user.availableBalance = Number((availableBalance+amount).toFixed(2));
@@ -489,14 +490,12 @@ async function getProfile(req, res) {
   try {
     const user = await User.findById(req.user.user);
     if (user) {
-      const level = user.level;
-      const allBadges = badges.filter((badge) => badge.level <= level).reverse();
       return res.status(200).json({
         name: user.name,
         // rank: user.rank,
         level: user.level,
         referrals: user.referrals,
-        badges: allBadges,
+        badges: user.badges,
         balance: user.availableBalance,
         photoUrl: user.photo,
       });
@@ -599,7 +598,7 @@ async function getStats(req, res) {
         },
       },
     ]);
-    console.log(topUsers);
+
     return res.status(200).json({
       onlineUsers: onlineUsers,
       totalUsers: totalUsers,

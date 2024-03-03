@@ -18,6 +18,18 @@ async function send(req, res) {
    
     var notificationMessage;
     if(notificationType == "ping"){
+
+      const latestNotification = await Notification.findOne({senderId: senderUser._id, receiverId: req.body.userId}).sort({createdAt: -1});
+      if (latestNotification){
+        const currentDate = Date.now();
+        const timeDifference = currentDate - latestNotification.createdAt
+        if (timeDifference < 24 * 60 * 60 * 1000){
+          return res.status(403).json({
+          message: "You can only ping once in 24 hours"
+        })
+      }
+      }
+
       notificationMessage = {
         title: "Time to mine!",
         body: `Your friend ${username} is reminding you to start your mining session`,

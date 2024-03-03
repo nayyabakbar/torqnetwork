@@ -68,8 +68,18 @@ const userSchema = mongoose.Schema({
   },
   badges: [
     {
-      type: String,
-      default: "",
+      name: {
+        type: String,
+        default: ""
+      },
+      level: {
+        type: Number,
+        default: 0
+      },
+      imageUrl: {
+        type: String,
+        default: ""
+      },
     },
   ],
   invitationCode: {
