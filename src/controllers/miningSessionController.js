@@ -304,6 +304,7 @@ const longInactivity = schedule.scheduleJob("0 * * * *", async function () {
     });
     const promises2 = users2.map(async (user) => {
       user.stakingBalance = 0;
+      const stakings = await Staking.updateMany({userId: user._id}, {isActive: false});
       await user.save();
     });
     await Promise.all([...promises1, ...promises2]);
