@@ -48,7 +48,8 @@ async function signUp(req, res) {
              const calculateLevel = async (referrals) =>
             Math.floor(Math.cbrt(referrals + 1));
        
-          const inviterLevel = await calculateLevel(inviter.referrals)
+          const inviterLevel = await calculateLevel(inviter.referrals);
+          const newUserLevel = await calculateLevel(saveUser.referrals);
           const progress = new Progress();
           await progress.save();
           saveUser.progress = progress._id;
@@ -59,12 +60,16 @@ async function signUp(req, res) {
             inviter.tier1Referrals.push(saveUser._id);
             inviter.referrals += 1;
             saveUser.referrals += 1;
-            inviter.level = inviterLevel
+            inviter.level = inviterLevel;
+            saveUser.level = newUserLevel;
             const increaseBonus = 10 * constants.baseMiningRate;
             sendNotificationOnReferral(inviter._id, saveUser._id);
 
-            const allBadges = badges.filter((badge) => badge.level <= inviterLevel).reverse();
-            inviter.badges = allBadges;
+            const allNewUserBadges = badges.filter((badge) => badge.level <= newUserLevel).reverse();
+            saveUser.badges = allNewUserBadges;
+
+            const allInviterBadges = badges.filter((badge) => badge.level <= inviterLevel).reverse();
+            inviter.badges = allInviterBadges;
 
             if(inviter.referrals === 5){
               inviter.availableBalance +=  increaseBonus;
