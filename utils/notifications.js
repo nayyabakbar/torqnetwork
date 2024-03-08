@@ -19,7 +19,7 @@ async function send(req, res) {
     var notificationMessage;
     if(notificationType == "ping"){
 
-      const latestNotification = await Notification.findOne({senderId: senderUser._id, receiverId: req.body.userId}).sort({createdAt: -1});
+      const latestNotification = await Notification.findOne({senderId: senderUser._id, receiverId: req.body.userId, notificationType: "ping"}).sort({createdAt: -1});
       if (latestNotification){
         const currentDate = Date.now();
         const timeDifference = currentDate - latestNotification.createdAt
@@ -34,6 +34,9 @@ async function send(req, res) {
         title: "Time to mine!",
         body: `Your friend ${username} is reminding you to start your mining session`,
       };
+
+      const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}, notificationType: "ping"})
+      await newNotification.save();
     }
 
     else{
@@ -41,6 +44,9 @@ async function send(req, res) {
         title: "Congratulations!",
         body: `Your mining rate increased by ${data}% torq from spinning bonus wheel`,
         };
+
+        const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}, notificationType: "bonusWheel"})
+        await newNotification.save();
     }
 
     const message = {
@@ -52,9 +58,6 @@ async function send(req, res) {
       const response = await getMessaging().send(message);
       console.log("Successfully sent message:", response);
     }
-
-    const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}})
-    await newNotification.save();
 
     res.status(200).json({ message: "Notification sent successfully" });
   } catch (error) {
@@ -76,12 +79,18 @@ async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
         title: "You just completed a task to level up",
         body: `You are rewarded ${bonus} torq because 5 people have joined from your invitation code`,
       };
+      const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}, notificationType: "invitedFriends"})
+      await newNotification.save();
+      
     }
     else {
       notificationMessage = {
         title: "Someone joined with your invitation Code!",
         body: ` ${username} just joined with your invitation Code!`,
       };
+
+      const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}, notificationType: "invitationCode"})
+      await newNotification.save();
     }
     
 
@@ -95,9 +104,6 @@ async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
       console.log("Successfully sent message:", response);
     }
 
-    
-    const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}})
-    await newNotification.save();
     return;
 
   } catch (error) {
@@ -118,24 +124,33 @@ async function sendNotificationOnProgress(receiver,sender, type = "", bonus= 0){
         title: "You just completed a task to level up",
         body: `You are rewarded ${bonus} torq upon starting your earning on Torqnetwork`,
       };
+
+      const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}, notificationType: "startedEarning"})
+      await newNotification.save();
     }
     else if (type === "photo"){
       notificationMessage = {
         title: "You just completed a task to level up",
         body: `You are rewarded ${bonus} torq upon adding your photo`,
       };
+      const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}, notificationType: "addedPhoto"})
+      await newNotification.save();
     }
     else if (type === "twitter"){
       notificationMessage = {
         title: "You just completed a task to level up",
         body: `You are rewarded ${bonus} torq upon following us on twitter`,
       };
+      const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}, notificationType: "addedTwitter"})
+      await newNotification.save();
     }
     else if (type === "telegram"){
       notificationMessage = {
         title: "You just completed a task to level up",
         body: `You are rewarded ${bonus} torq upon following us on telegram`,
       };
+      const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}, notificationType: "addedTelegram"})
+      await newNotification.save();
     }
     
 
@@ -148,10 +163,6 @@ async function sendNotificationOnProgress(receiver,sender, type = "", bonus= 0){
       const response = await getMessaging().send(message);
       console.log("Successfully sent message:", response);
     }
-
-    
-    const newNotification = new Notification({senderId: senderUser._id, receiverId: receivingUser._id, message: {title: notificationMessage.title, body: notificationMessage.body}})
-    await newNotification.save();
     return;
 
   } catch (error) {
