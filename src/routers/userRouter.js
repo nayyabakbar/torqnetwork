@@ -12,7 +12,7 @@ const {startMining, startStaking} = require ("../controllers/miningSessionContro
 const {personalInfo} = require ("../controllers/kycController");
 const {getProgress, followOnTwitter, followOnTelegram} = require ("../controllers/progressController");
 
-const {send} = require("../../utils/notifications");
+const {send, sendToAll} = require("../../utils/notifications");
 
 function verifyToken(req, res, next) {
   const token = req.headers.authorization;
@@ -95,7 +95,7 @@ router.get("/getStakingInfo", verifyToken, getStakingInfo);
 router.get("/getUserBurningCards", verifyToken, getUserBurningCards);
 
 router.post("/sendNotification", verifyToken, send);
-router.get("/getNotifications",verifyToken, getNotifications);
+router.post("/sendNotificationToAll", verifyToken, sendToAll);
 router.post("/toggleNotification", verifyToken, toggleNotification);
 router.post("/toggleEmailNotification", verifyToken, toggleEmailNotification);
 

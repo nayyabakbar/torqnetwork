@@ -53,10 +53,8 @@ async function send(req, res) {
       notification: notificationMessage,
       token: fcmToken,
     };
-
     if (receivingUser.enableNotification){
       const response = await getMessaging().send(message);
-      console.log("Successfully sent message:", response);
     }
 
     res.status(200).json({ message: "Notification sent successfully" });
@@ -65,6 +63,56 @@ async function send(req, res) {
     res.status(500).json({ error: "Error sending notification" });
   }
 }
+
+
+async function sendToAll(req, res) {
+  try {
+    const { receivers } = req.body;
+    const senderUser = await User.findById(req.user.user);
+    const username = senderUser.name;
+
+    for (const item of receivers) {
+      const user = await User.findById(item);
+      const userToken = user.fcmToken;
+
+      if (!user) {
+        console.error(`User with id ${item} not found`);
+        continue; // Skip to the next iteration if user is not found
+      }
+
+      const notificationMessage = {
+        title: "Time to mine!",
+        body: `Your friend ${username} is reminding you to start your mining session`,
+      };
+
+      const newNotification = new Notification({
+        senderId: senderUser._id,
+        receiverId: item,
+        message: { title: notificationMessage.title, body: notificationMessage.body },
+        notificationType: "ping"
+      });
+      await newNotification.save();
+
+      const message = {
+        notification: notificationMessage,
+        token: userToken,
+      };
+      if (user.enableNotification) {
+        const response = await getMessaging().send(message);
+        console.log("Notification sent successfully to user:", user._id);
+      } else {
+        console.log("User has disabled notifications:", user._id);
+      }
+    }
+
+    res.status(200).json({ message: "Notifications sent successfully" });
+  } catch (error) {
+    console.error("Error sending notifications:", error);
+    res.status(500).json({ error: "Error sending notifications" });
+  }
+}
+
+
 
 async function sendNotificationOnReferral(receiver,sender, type = "", bonus= 0){
   try {
@@ -171,4 +219,4 @@ async function sendNotificationOnProgress(receiver,sender, type = "", bonus= 0){
   }
 }
 
-module.exports = {send, sendNotificationOnReferral, sendNotificationOnProgress}
+module.exports = {send, sendNotificationOnReferral, sendNotificationOnProgress, sendToAll}
