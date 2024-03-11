@@ -96,6 +96,7 @@ router.get("/getUserBurningCards", verifyToken, getUserBurningCards);
 
 router.post("/sendNotification", verifyToken, send);
 router.post("/sendNotificationToAll", verifyToken, sendToAll);
+router.get("/getNotifications", verifyToken, getNotifications)
 router.post("/toggleNotification", verifyToken, toggleNotification);
 router.post("/toggleEmailNotification", verifyToken, toggleEmailNotification);
 
