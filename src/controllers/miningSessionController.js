@@ -73,18 +73,14 @@ async function startMining(req, res) {
       await user.save();
       const timePassed = currentDate - lastCheckIn;
 
-      //if (!lastCheckIn || timePassed <= 25 * 60 * 60 * 1000) {
-
-      if (!lastCheckIn || timePassed <= 26 * 60 * 1000) {
+      if (!lastCheckIn || timePassed <= 25 * 60 * 60 * 1000) {
         user.streak += 1;
         if (user.streak % 6 === 0) {
           user.daysOff += 1; // Increment the user's daysOff by 1
         }
       }
 
-      //if (timePassed > 25 * 60 * 60 * 1000) {
-
-      if (timePassed > 26 * 60 * 1000) {
+      if (timePassed > 25 * 60 * 60 * 1000) {
         user.streak = 0;
       }
       await user.save();
@@ -108,14 +104,11 @@ async function startMining(req, res) {
 
 async function processHourlyEarnings(userId, sessionId) {
   const startTime = new Date();
-  // const endTime = new Date(startTime.getTime() + 23 * 60 * 60 * 1000);
-
-  const endTime = new Date(startTime.getTime() + 23 * 60 * 1000);
+  const endTime = new Date(startTime.getTime() + 23 * 60 * 60 * 1000);
   const endTime2 = new Date(endTime.getTime() + 1 * 60 * 1000);
-  //const minute = startTime.getMinutes();
-  //const cronJobRule = `${minute} * * * *`;
+  const minute = startTime.getMinutes();
+  const cronJobRule = `${minute} * * * *`;
 
-  const cronJobRule = "* * * * *";
   await getHourlyEarnings(userId, sessionId);
 
   const job = schedule.scheduleJob(endTime2, async function () {
@@ -151,26 +144,6 @@ async function getHourlyEarnings(userId, sessionId) {
     userId,
     "T2"
   );
-
-  //const user = await User.findById(referralId);
-  // const inviterId = user.inviter;
-  // const inviter = await User.findById(inviterId);
-  // let inviterBonus = 0;
-  // if (inviter) {
-  //   const activeSession = await MiningSession.findOne({
-  //     userId: inviter._id,
-  //     isActive: true,
-  //   });
-  //   if (activeSession) {
-  //     inviterBonus =
-  //       constants.tier1ReferralBonusPercentage * constants.baseMiningRate;
-  //   }
-  // }
-
-  console.log("tier 1 count", tier1Count);
-  console.log("tier 2 count", tier2Count);
-  console.log("tier 1 Bonus", tier1Count);
-  console.log("tier 2 bonus", tier2Count);
 
   const session = await MiningSession.findById(sessionId);
   const bonusPercentage = session.bonusWheel / 100;
@@ -239,11 +212,10 @@ async function getActiveTiers(userId, referralType) {
   }
 }
 
-const inactivityCheckJob = schedule.scheduleJob(" * * * * *", async function () { //All users that have been inactive since 25 hours
+const inactivityCheckJob = schedule.scheduleJob(" 0 * * * *", async function () { //All users that have been inactive since 25 hours
     try {
       const inactiveUsers = await User.find({
-        //lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
-        lastCheckIn: { $lt: new Date(new Date() - 26 * 60 * 1000) },
+        lastCheckIn: { $lt: new Date(new Date() - 25 * 60 * 60 * 1000) }
       });
       for (const user of inactiveUsers) {
         const daysOffAvailable = user.daysOff;
@@ -287,17 +259,11 @@ const inactivityCheckJob = schedule.scheduleJob(" * * * * *", async function () 
 
 inactivityCheckJob.invoke();
 
-//schedule.scheduleJob('0 0 * * *', async function () { //All users that have been inactive since 30 days
-const longInactivity = schedule.scheduleJob("0 * * * *", async function () {
+const longInactivity = schedule.scheduleJob('0 0 * * *', async function () { //All users that have been inactive since 30 days
   try {
-    //const users = await User.find({ lastCheckIn: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } });
+    const users1 = await User.find({ lastCheckIn: { $lt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000) } });
+    const users2 = await User.find({ lastCheckIn: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } });
 
-    const users1 = await User.find({
-      lastCheckIn: { $lt: new Date(Date.now() - 11 * 60 * 60 * 1000) },
-    });
-    const users2 = await User.find({
-      lastCheckIn: { $lt: new Date(Date.now() - 13 * 60 * 60 * 1000) },
-    });
     const promises1 = users1.map(async (user) => {
       user.availableBalance = 0;
       await user.save();

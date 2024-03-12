@@ -71,6 +71,17 @@ async function sendToAll(req, res) {
     const senderUser = await User.findById(req.user.user);
     const username = senderUser.name;
 
+    const latestNotification = await Notification.findOne({senderId: senderUser._id, notificationType: "pingAll"}).sort({createdAt: -1});
+    if (latestNotification){
+        const currentDate = Date.now();
+        const timeDifference = currentDate - latestNotification.createdAt
+        if (timeDifference < 24 * 60 * 60 * 1000){
+          return res.status(403).json({
+          message: "You can only ping once in 24 hours"
+        })
+      }
+    }
+
     for (const item of receivers) {
       const user = await User.findById(item);
       const userToken = user.fcmToken;
@@ -89,7 +100,7 @@ async function sendToAll(req, res) {
         senderId: senderUser._id,
         receiverId: item,
         message: { title: notificationMessage.title, body: notificationMessage.body },
-        notificationType: "ping"
+        notificationType: "pingAll"
       });
       await newNotification.save();
 
@@ -106,6 +117,7 @@ async function sendToAll(req, res) {
     }
 
     res.status(200).json({ message: "Notifications sent successfully" });
+  
   } catch (error) {
     console.error("Error sending notifications:", error);
     res.status(500).json({ error: "Error sending notifications" });
