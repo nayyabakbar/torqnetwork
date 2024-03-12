@@ -70,7 +70,14 @@ async function sendToAll(req, res) {
     const { receivers } = req.body;
     const senderUser = await User.findById(req.user.user);
     const username = senderUser.name;
-
+    
+    const templateNotification = {
+        senderId: senderUser._id,
+        receiverId: "",
+        notificationType: "pingAll",
+        createdAt: Date.now()
+    }
+    
     const latestNotification = await Notification.findOne({senderId: senderUser._id, notificationType: "pingAll"}).sort({createdAt: -1});
     if (latestNotification){
         const currentDate = Date.now();
@@ -96,12 +103,8 @@ async function sendToAll(req, res) {
         body: `Your friend ${username} is reminding you to start your mining session`,
       };
 
-      const newNotification = new Notification({
-        senderId: senderUser._id,
-        receiverId: item,
-        message: { title: notificationMessage.title, body: notificationMessage.body },
-        notificationType: "pingAll"
-      });
+      const newNotification = new Notification(templateNotification);
+      newNotification.receiverId = item
       await newNotification.save();
 
       const message = {
