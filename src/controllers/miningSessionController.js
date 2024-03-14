@@ -136,11 +136,11 @@ async function processHourlyEarnings(userId, sessionId) {
 }
 
 async function getHourlyEarnings(userId, sessionId) {
-  const { count: tier1Count, bonus: tier1Bonus } = await getActiveTiers(
+  const { count: tier1Count} = await getActiveTiers(
     userId,
     "T1"
   );
-  const { count: tier2Count, bonus: tier2Bonus } = await getActiveTiers(
+  const { count: tier2Count } = await getActiveTiers(
     userId,
     "T2"
   );
@@ -154,9 +154,7 @@ async function getHourlyEarnings(userId, sessionId) {
       (constants.tier1ReferralBonusPercentage * constants.baseMiningRate) +
       tier2Count *
         (constants.tier2ReferralBonusPercentage * constants.baseMiningRate) +
-      bonusPercentage * constants.baseMiningRate +
-      constants.baseMiningRate * (tier1Bonus / 100) +
-      constants.baseMiningRate * (tier2Bonus / 100));
+      bonusPercentage * constants.baseMiningRate);
 
   const user = await User.findById(userId);
   const availableBalance = user.availableBalance;
@@ -185,7 +183,6 @@ async function getActiveTiers(userId, referralType) {
   try {
     const user = await User.findById(userId);
     let count = 0;
-    let bonus = 0;
     const referrals =
       referralType === "T1" ? user.tier1Referrals : user.tier2Referrals;
 
@@ -197,7 +194,6 @@ async function getActiveTiers(userId, referralType) {
           isActive: true,
         });
         if (activeSession) {
-          bonus = activeSession.bonusWheel;
           count++;
         }
       }
@@ -205,10 +201,10 @@ async function getActiveTiers(userId, referralType) {
 
     await Promise.all(promises);
     console.log("count is", count);
-    return { count, bonus };
+    return { count };
   } catch (error) {
     console.error("An error occurred in getActiveTiers:", error);
-    return { count: 0, bonus: 0 };
+    return { count: 0};
   }
 }
 
